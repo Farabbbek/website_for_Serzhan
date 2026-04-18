@@ -10,17 +10,17 @@ const prefersReducedMotion =
     ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
     : false;
 
-function PhiloLogo() {
+function ZerdeLogo() {
   return (
     <svg
       width="220"
       height="88"
       viewBox="0 0 220 88"
       role="img"
-      aria-labelledby="auth-philo-logo-title"
+      aria-labelledby="auth-zerde-logo-title"
       className="h-auto w-[11rem]"
     >
-      <title id="auth-philo-logo-title">PHILO</title>
+      <title id="auth-zerde-logo-title">ZERDE</title>
       <text
         x="110"
         y="44"
@@ -31,7 +31,7 @@ function PhiloLogo() {
         fontWeight="900"
         letterSpacing="6"
       >
-        PHILO
+        ZERDE
       </text>
       <path d="M86 61H134L110 79L86 61Z" fill="var(--color-primary)" />
     </svg>
@@ -121,7 +121,7 @@ export function LoginCard() {
       }}
     >
       <div className="flex flex-col items-center gap-[var(--space-5)] text-center">
-        <PhiloLogo />
+        <ZerdeLogo />
         <h1 className="font-display text-[length:var(--text-xl)] text-[color:var(--color-text)]">
           Жүйеге кіру
         </h1>

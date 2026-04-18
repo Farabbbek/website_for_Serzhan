@@ -49,7 +49,7 @@ function AdminLogo() {
       aria-labelledby="admin-logo-title"
       className="h-auto w-[8rem]"
     >
-      <title id="admin-logo-title">PHILO</title>
+      <title id="admin-logo-title">ZERDE</title>
       <text
         x="110"
         y="44"
@@ -60,7 +60,7 @@ function AdminLogo() {
         fontWeight="900"
         letterSpacing="6"
       >
-        PHILO
+        ZERDE
       </text>
       <path d="M86 61H134L110 79L86 61Z" fill="var(--color-primary)" />
     </svg>

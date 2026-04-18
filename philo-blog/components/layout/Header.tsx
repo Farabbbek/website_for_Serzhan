@@ -45,11 +45,11 @@ const prefersReducedMotion =
     ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
     : false;
 
-function PhiloLogo() {
+function ZerdeLogo() {
   return (
     <Link
       href="/"
-      aria-label="Philo home"
+      aria-label="ZERDE home"
       className="flex items-center justify-center no-underline"
     >
       <svg
@@ -57,10 +57,10 @@ function PhiloLogo() {
         height="88"
         viewBox="0 0 220 88"
         role="img"
-        aria-labelledby="philo-logo-title"
+        aria-labelledby="zerde-logo-title"
         className="h-auto w-[8.75rem] sm:w-[10rem] md:w-[13.75rem]"
       >
-        <title id="philo-logo-title">PHILO</title>
+        <title id="zerde-logo-title">ZERDE</title>
         <text
           x="110"
           y="44"
@@ -71,7 +71,7 @@ function PhiloLogo() {
           fontWeight="900"
           letterSpacing="6"
         >
-          PHILO
+          ZERDE
         </text>
         <path
           d="M86 61H134L110 79L86 61Z"
@@ -164,7 +164,7 @@ export function Header() {
       <div className="md:hidden">
         <div className="editorial-shell grid min-h-16 grid-cols-[44px_1fr_44px] items-center gap-3 py-3">
           <div aria-hidden="true" className="h-11 w-11" />
-          <PhiloLogo />
+          <ZerdeLogo />
           <button
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
@@ -209,7 +209,7 @@ export function Header() {
             </nav>
 
             <div className="hidden justify-center md:flex">
-              <PhiloLogo />
+              <ZerdeLogo />
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end md:gap-4">
