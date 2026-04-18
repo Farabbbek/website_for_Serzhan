@@ -1,0 +1,12 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" style="--og-bg:rgb(249 248 244);--og-border:rgb(215 207 191);--og-primary:rgb(197 64 26);--og-secondary:rgb(92 92 46);--og-text:rgb(26 26 24);--og-muted:rgb(95 89 79);--og-faint:rgb(133 126 115);">
+  <rect width="1200" height="630" fill="var(--og-bg)"/>
+  <rect x="58" y="56" width="1084" height="518" stroke="var(--og-border)" stroke-width="2"/>
+  <line x1="58" y1="150" x2="1142" y2="150" stroke="var(--og-primary)" stroke-width="2"/>
+  <line x1="58" y1="486" x2="1142" y2="486" stroke="var(--og-border)" stroke-width="2"/>
+  <circle cx="108" cy="103" r="10" fill="var(--og-secondary)"/>
+  <text x="136" y="112" fill="var(--og-secondary)" font-family="Georgia, serif" font-size="30" letter-spacing="5">PHILO BLOG</text>
+  <text x="108" y="270" fill="var(--og-text)" font-family="Georgia, serif" font-size="76" font-weight="700">Philo Blog</text>
+  <text x="108" y="352" fill="var(--og-text)" font-family="Georgia, serif" font-size="52" font-weight="700">Цифровизация философии</text>
+  <text x="108" y="430" fill="var(--og-muted)" font-family="Arial, sans-serif" font-size="28">Editorial essays, philosophical criticism, and digital culture.</text>
+  <text x="108" y="534" fill="var(--og-faint)" font-family="Arial, sans-serif" font-size="22" letter-spacing="3">ESSAYS  /  CRITICISM  /  DIGITAL HUMANITIES</text>
+</svg>
