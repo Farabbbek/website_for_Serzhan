@@ -22,8 +22,8 @@ export async function generateMetadata({
 
   return {
     title: query
-      ? `Іздеу: ${query} | Philo Blog`
-      : "Іздеу | Philo Blog",
+      ? `Іздеу: ${query} | ZERDE Blog`
+      : "Іздеу | ZERDE Blog",
     description: query
       ? `Philo Blog ішінен "${query}" сұрауы бойынша мақалалар іздеу нәтижелері.`
       : "Philo Blog мақалалары бойынша іздеу беті.",

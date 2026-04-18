@@ -43,12 +43,12 @@ export async function generateMetadata({
 
   if (!category) {
     return {
-      title: "Санат табылмады | Philo Blog",
+      title: "Санат табылмады | ZERDE Blog",
     };
   }
 
   return {
-    title: `${category.name} | Philo Blog`,
+    title: `${category.name} | ZERDE Blog`,
     description: category.description,
   };
 }

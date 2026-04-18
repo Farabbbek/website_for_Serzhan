@@ -9,11 +9,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
-  title: "Philo Blog — Цифровизация философии",
+  title: "ZERDE Blog — Цифровизация философии",
   description:
     "Philo Blog explores the digital future of philosophy through essays, criticism, and editorial reflections in Kazakh and Russian contexts.",
   openGraph: {
-    title: "Philo Blog — Цифровизация философии",
+    title: "ZERDE Blog — Цифровизация философии",
     description:
       "Editorial essays and philosophical criticism about digital culture, ideas, and public thought.",
     images: [

@@ -3,7 +3,7 @@ import { PostCard } from "@/components/blog/PostCard";
 import { mockPosts } from "@/lib/queries/mockPosts";
 
 export const metadata: Metadata = {
-  title: "Журнал | Philo Blog",
+  title: "Журнал | ZERDE Blog",
   description:
     "Philo Blog журналының барлық мақалалары, эсселері және редакциялық материалдары.",
 };

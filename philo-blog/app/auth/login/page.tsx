@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LoginCard } from "@/components/admin/LoginCard";
 
 export const metadata: Metadata = {
-  title: "Жүйеге кіру | Philo Blog",
+  title: "Жүйеге кіру | ZERDE Blog",
   description: "Philo Blog әкімшілік панеліне кіру беті.",
 };
 
