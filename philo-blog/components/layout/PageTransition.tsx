@@ -3,12 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
-const prefersReducedMotion =
-  typeof window !== "undefined"
-    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    : false;
-
-export function PageTransition({
+export default function PageTransition({
   children,
 }: {
   children: React.ReactNode;
@@ -19,14 +14,10 @@ export function PageTransition({
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
-        transition={
-          prefersReducedMotion
-            ? { duration: 0 }
-            : { duration: 0.3, ease: "easeOut" }
-        }
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       >
         {children}
       </motion.div>

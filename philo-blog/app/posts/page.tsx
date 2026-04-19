@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PostCard } from "@/components/blog/PostCard";
-import { mockPosts } from "@/lib/queries/mockPosts";
+import { getPosts } from "@/lib/queries/posts";
 
 export const metadata: Metadata = {
   title: "Журнал | ZERDE Blog",
@@ -8,7 +8,9 @@ export const metadata: Metadata = {
     "Philo Blog журналының барлық мақалалары, эсселері және редакциялық материалдары.",
 };
 
-export default function PostsPage() {
+export default async function PostsPage() {
+  const posts = await getPosts();
+
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
       <div className="flex flex-col gap-[var(--space-8)]">
@@ -24,15 +26,21 @@ export default function PostsPage() {
           жарияланған материалдар бір жерде жинақталды.
         </p>
 
-        <div className="grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">
-          {mockPosts.map((post, index) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              variant={index === 0 ? "featured" : "default"}
-            />
-          ))}
-        </div>
+        {posts.length === 0 ? (
+          <p className="font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
+            Жарияланған мақалалар әзірге табылмады.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post, index) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                variant={index === 0 ? "featured" : "default"}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

@@ -1,37 +1,212 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 
-const footerLinks = [
-  { href: "/", label: "Редакция" },
-  { href: "/", label: "Манифест" },
-  { href: "/", label: "Архив" },
-];
+type FooterLink = {
+  label: string;
+  href: string;
+  external?: boolean;
+};
 
-export function Footer() {
+type FooterColumn = {
+  title: string;
+  links: FooterLink[];
+};
+
+export default function Footer() {
+  const year = new Date().getFullYear();
+
+  const columns: FooterColumn[] = [
+    {
+      title: "ZERDE",
+      links: [
+        { label: "Басты бет", href: "/" },
+        { label: "Мақалалар", href: "/category/maqalalar" },
+        { label: "Цифр", href: "/category/cifr" },
+        { label: "Этика", href: "/category/etika" },
+      ],
+    },
+    {
+      title: "ПЛАТФОРМА",
+      links: [
+        { label: "Біз туралы", href: "/about" },
+        { label: "Журнал", href: "/posts" },
+        { label: "Форум", href: "/forum" },
+        { label: "Подкасттар", href: "/podcasts" },
+      ],
+    },
+    {
+      title: "БАЙЛАНЫС",
+      links: [
+        {
+          label: "Telegram",
+          href: "https://t.me/zerde_philosophy",
+          external: true,
+        },
+        {
+          label: "Instagram",
+          href: "https://instagram.com/zerde.philosophy",
+          external: true,
+        },
+        {
+          label: "YouTube",
+          href: "https://youtube.com/@zerde",
+          external: true,
+        },
+        { label: "Email", href: "mailto:zerde@kargu.kz", external: true },
+      ],
+    },
+  ];
+
   return (
-    <footer className="mt-12 border-t border-[var(--color-divider)]">
-      <div className="editorial-shell py-8 md:py-12">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="editorial-stack">
-            <p className="eyebrow">Philo Blog</p>
-            <p className="max-w-2xl text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
-              Философиялық эссе, қоғамдық ой және цифрлық дәуірдегі гуманитарлық
-              сұрақтар туралы редакциялық алаң.
-            </p>
-          </div>
-
-          <nav aria-label="Footer" className="flex flex-wrap gap-4 md:justify-end">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="inline-flex min-h-11 items-center text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-muted)] no-underline transition-colors hover:text-[color:var(--color-primary)]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+    <motion.footer
+      style={{
+        borderTop: "1px solid var(--color-divider)",
+        background: "var(--color-bg)",
+        color: "var(--color-text)",
+      }}
+    >
+      {/* Main footer grid */}
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "clamp(40px, 5vw, 64px) clamp(24px, 6vw, 80px)",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "clamp(32px, 4vw, 48px)",
+        }}
+      >
+        {/* Brand column */}
+        <div>
+          <p
+            style={{
+              fontFamily: "'Playfair Display', Georgia, serif",
+              fontSize: 28,
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              color: "var(--color-text)",
+              marginBottom: 4,
+            }}
+          >
+            ZERDE
+          </p>
+          <div
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: "6px solid transparent",
+              borderRight: "6px solid transparent",
+              borderTop: "7px solid #C5401A",
+              marginBottom: 16,
+            }}
+          />
+          <p
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: 12,
+              lineHeight: 1.7,
+              color: "var(--color-text-muted)",
+              maxWidth: 200,
+            }}
+          >
+            Қазақстан философия студенттерінің платформасы. КарГУ · Ф-23-1К
+          </p>
         </div>
+
+        {/* Link columns */}
+        {columns.map((col) => (
+          <div key={col.title}>
+            <p
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "var(--color-text-faint)",
+                marginBottom: 16,
+              }}
+            >
+              {col.title}
+            </p>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              {col.links.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noopener noreferrer" : undefined}
+                    style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 13,
+                      fontWeight: 400,
+                      color: "var(--color-text-muted)",
+                      textDecoration: "none",
+                      transition: "color 180ms ease",
+                      display: "inline-block",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "var(--color-text)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--color-text-muted)";
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
-    </footer>
+
+      {/* Bottom bar */}
+      <div
+        style={{
+          borderTop: "1px solid var(--color-divider)",
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "16px clamp(24px, 6vw, 80px)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: 11,
+            color: "var(--color-text-faint)",
+            letterSpacing: "0.06em",
+          }}
+        >
+          © {year} ZERDE · Е.А.Бөкетов атындағы КарГУ
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: 11,
+            color: "var(--color-text-faint)",
+            letterSpacing: "0.06em",
+          }}
+        >
+          КАЗ / РУС / ENG
+        </p>
+      </div>
+    </motion.footer>
   );
 }

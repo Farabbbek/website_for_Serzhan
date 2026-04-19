@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { mockPosts } from "@/lib/queries/mockPosts";
 
 const prefersReducedMotion =
   typeof window !== "undefined"
@@ -43,6 +44,17 @@ const itemVariants = {
     },
   },
 };
+
+const primaryPost = mockPosts[0];
+const secondaryPost = mockPosts[1];
+
+const primaryPostHref = primaryPost
+  ? `/posts/${primaryPost.slug}`
+  : "/category/maqalalar";
+
+const secondaryPostHref = secondaryPost
+  ? `/posts/${secondaryPost.slug}`
+  : "/category/maqalalar";
 
 export function HeroSection() {
   return (
@@ -100,7 +112,7 @@ export function HeroSection() {
                 достоинство медленного чтения.
               </p>
               <Link
-                href="/"
+                href={primaryPostHref}
                 className="font-ui text-[length:var(--text-sm)] font-bold tracking-[0.08em] text-[color:var(--color-primary)] no-underline transition-colors duration-200 hover:text-[color:var(--color-primary-hover)]"
               >
                 Оқу...
@@ -122,7 +134,7 @@ export function HeroSection() {
               памяти и политике решений.
             </p>
             <Link
-              href="/"
+              href={secondaryPostHref}
               className="font-ui text-[length:var(--text-sm)] font-bold tracking-[0.08em] text-[color:var(--color-primary)] no-underline transition-colors duration-200 hover:text-[color:var(--color-primary-hover)]"
             >
               Оқу...

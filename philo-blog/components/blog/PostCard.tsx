@@ -22,11 +22,13 @@ function formatPublishedDate(dateString: string) {
     return dateString;
   }
 
-  return new Intl.DateTimeFormat("kk-KZ", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  // To prevent hydration mismatch, format strictly using UTC,
+  // or return a fixed format DD.MM.YYYY string
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const year = date.getUTCFullYear();
+
+  return `${day}.${month}.${year}`;
 }
 
 function CoverImage({

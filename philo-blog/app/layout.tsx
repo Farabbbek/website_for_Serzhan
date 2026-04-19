@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Footer } from "@/components/layout/Footer";
+import Footer from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { PageTransition } from "@/components/layout/PageTransition";
+import PageTransition from "@/components/layout/PageTransition";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import "./globals.css";
 
