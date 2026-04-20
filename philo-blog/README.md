@@ -122,11 +122,35 @@ npm run start
 Для работы с Supabase требуются следующие ключи:
 
 ```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 *(Если ключи отсутствуют или стоят заглушки — браузерный клиент отключает функционал работы с БД корректно, без падения приложения).*
+
+Для быстрого старта используйте шаблон файла:
+
+```bash
+cp .env.example .env.local
+```
+
+---
+
+## 6.1) Деплой на Vercel
+
+1. Импортируйте репозиторий в Vercel (Framework: Next.js определяется автоматически).
+2. В настройках проекта Vercel добавьте Environment Variables:
+  - `NEXT_PUBLIC_SITE_URL` = ваш прод-домен (например, `https://your-domain.com`)
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Запустите Deploy (Build Command и Output настраивать не нужно: используются значения по умолчанию Next.js).
+4. После первого деплоя проверьте:
+  - `/auth/login` и `/admin` (авторизация и middleware)
+  - загрузку обложки в админке
+  - OpenGraph/metadata на главной и `/about`
+
+Примечание: если `NEXT_PUBLIC_SITE_URL` не задан, приложение использует `VERCEL_URL` как fallback для metadata.
 
 ---
 

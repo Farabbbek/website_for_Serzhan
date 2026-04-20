@@ -5,7 +5,10 @@ import RootLayoutClient from "@/components/layout/RootLayoutClient";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import "./globals.css";
 
-const rawUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const rawUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.VERCEL_URL ||
+  "http://localhost:3000";
 const siteUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
 
 export const metadata: Metadata = {
