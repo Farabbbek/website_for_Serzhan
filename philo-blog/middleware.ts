@@ -1,8 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const { pathname } = request.nextUrl;
+
+  // Only protect /admin routes
+  if (!pathname.startsWith("/admin")) {
+    return NextResponse.next();
+  }
+
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,45 +24,43 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: request.headers } });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            response.cookies.set(name, value, options),
           );
         },
       },
     },
   );
 
+  // Single lightweight call - reads from cookie, no DB hit
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isProfileRoute = request.nextUrl.pathname.startsWith("/profile");
-
-  if (isProfileRoute && !user) {
+  if (!session) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  if (isAdminRoute) {
-    if (!user) {
-      return NextResponse.redirect(new URL("/auth/login?redirect=/admin", request.url));
-    }
+  // Read role from JWT app_metadata (set via Supabase dashboard or trigger)
+  // Falls back to DB query ONLY if not in JWT
+  const role = session.user.app_metadata?.role ?? session.user.user_metadata?.role;
 
+  if (role !== "admin") {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
+      .eq("id", session.user.id)
       .single();
 
-    if (!profile || profile.role !== "admin") {
-      return NextResponse.redirect(new URL("/?error=unauthorized", request.url));
+    if (profile?.role !== "admin") {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/profile/:path*", "/profile"],
+  matcher: ["/admin/:path*"],
 };

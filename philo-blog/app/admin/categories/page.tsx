@@ -1,45 +1,53 @@
-import type { Metadata } from "next";
-import { getPostsByCategorySlug, mockCategories } from "@/lib/queries/mockPosts";
+import CategoriesClient from "./CategoriesClient";
+import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = {
-  title: "Категориялар | Admin Panel",
-  description: "Philo Blog әкімшілік панеліндегі категорияларды басқару беті.",
+type InitialCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  post_count: number;
+  created_at: string;
 };
 
-export default function AdminCategoriesPage() {
-  return (
-    <section className="flex flex-col gap-[var(--space-8)]">
-      <div className="flex flex-col gap-[var(--space-3)]">
-        <h1 className="font-display text-[length:var(--text-xl)] text-[color:var(--color-text)]">
-          Категориялар
-        </h1>
-        <p className="max-w-[56ch] font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
-          Әр бөлімнің редакциялық сипаттамасы мен мақалалар санын осы жерден шолуға болады.
-        </p>
-      </div>
+type CategoryQueryRow = {
+  id?: string | null;
+  name?: string | null;
+  slug?: string | null;
+  description?: string | null;
+  created_at?: string | null;
+  posts?: Array<{ count?: number | string | null }> | { count?: number | string | null } | null;
+};
 
-      <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2 xl:grid-cols-3">
-        {mockCategories.map((category) => (
-          <article
-            key={category.slug}
-            className="border border-[color:var(--color-divider)] bg-[color:var(--color-surface)] p-[var(--space-6)]"
-            style={{ borderRadius: "var(--radius-lg)" }}
-          >
-            <p className="font-ui text-[length:var(--text-xs)] uppercase tracking-[0.16em] text-[color:var(--color-primary)]">
-              {category.slug}
-            </p>
-            <h2 className="mt-[var(--space-3)] font-display text-[length:var(--text-lg)] text-[color:var(--color-text)]">
-              {category.name}
-            </h2>
-            <p className="mt-[var(--space-3)] font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
-              {category.description}
-            </p>
-            <p className="mt-[var(--space-4)] font-ui text-[length:var(--text-sm)] uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">
-              {getPostsByCategorySlug(category.slug).length} мақала
-            </p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
+export default async function CategoriesPage() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return <CategoriesClient initialCategories={[]} />;
+  }
+
+  const { data } = await supabase
+    .from("categories")
+    .select(`
+      *,
+      posts(count)
+    `)
+    .order("created_at", { ascending: false });
+
+  const initialCategories: InitialCategory[] = ((data ?? []) as CategoryQueryRow[]).map((cat) => {
+    const postsCount = Array.isArray(cat.posts)
+      ? Number(cat.posts?.[0]?.count ?? 0)
+      : Number(cat.posts?.count ?? 0);
+
+    return {
+      id: String(cat.id),
+      name: String(cat.name ?? ""),
+      slug: String(cat.slug ?? ""),
+      description: cat.description ?? null,
+      post_count: Number.isFinite(postsCount) ? postsCount : 0,
+      created_at: String(cat.created_at ?? new Date().toISOString()),
+    };
+  });
+
+  return <CategoriesClient initialCategories={initialCategories} />;
 }

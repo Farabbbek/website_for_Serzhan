@@ -10,6 +10,7 @@ export type CategoryMeta = Category & {
 export type Profile = {
   id?: string;
   full_name: string;
+  username?: string | null;
   avatar_url: string | null;
   user_type?: "student" | "teacher" | null;
   role?: "user" | "editor" | "admin" | null;
@@ -22,6 +23,9 @@ export type Post = {
   excerpt: string;
   content?: string;
   cover_url: string | null;
+  file_url?: string | null;
+  source_url?: string | null;
+  author_name?: string | null;
   type?: string | null;
   status?: string | null;
   lang?: string | null;

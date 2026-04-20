@@ -1,311 +1,201 @@
-import Image from "next/image";
-import Link from "next/link";
+"use client";
+
+import { animate, motion, useInView } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+
+function FadeUp({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{
+        duration: 0.7,
+        delay,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function CountUp({
+  value,
+  suffix = "",
+  label,
+}: {
+  value: number;
+  suffix?: string;
+  label: string;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+
+    const controls = animate(0, value, {
+      duration: 1.1,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (latest) => setDisplayValue(Math.round(latest)),
+    });
+
+    return () => controls.stop();
+  }, [inView, value]);
+
+  return (
+    <div
+      ref={ref}
+      className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-6 py-7"
+    >
+      <motion.span
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="block font-display text-[42px] leading-none text-[color:var(--color-text)]"
+      >
+        {displayValue}
+        {suffix}
+      </motion.span>
+      <p className="mt-3 font-ui text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+const teamMembers = [
+  {
+    name: "Marat Zhumageldinov",
+    role: "Куратор",
+  },
+  {
+    name: "Al-Farabi Tusup",
+    role: "Редактор",
+  },
+  {
+    name: "Daniyar Bekbol",
+    role: "Контент координаторы",
+  },
+  {
+    name: "Aigerim Nurtai",
+    role: "Қоғамдастық менеджері",
+  },
+];
+
+const smoothEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+const teamContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12 },
+  },
+};
+
+const teamItem = {
+  hidden: { opacity: 0, y: 32 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: smoothEase },
+  },
+};
 
 export default function AboutPage() {
   return (
-    <main style={{ background: "var(--color-bg)", color: "var(--color-text)" }}>
+    <div style={{ width: "100vw", marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }}>
+      <section
+        className="flex min-h-screen items-center justify-center bg-[color:var(--color-bg)] px-6 py-24 text-[color:var(--color-text)]"
+      >
+        <div className="mx-auto w-full max-w-[1120px]">
+          <motion.h1
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            style={{ fontSize: "clamp(3rem, 8vw, 8rem)", fontWeight: 800, lineHeight: 0.96 }}
+            className="font-display"
+          >
+            ZERDE туралы
+          </motion.h1>
 
-      {/* ─── SECTION 1: HERO — БІЗ ТУРАЛЫ ─── */}
-      <section style={{
-        borderBottom: "1px solid var(--color-divider)",
-        padding: "clamp(48px, 8vw, 96px) clamp(24px, 6vw, 80px)",
-        maxWidth: 1200,
-        margin: "0 auto"
-      }}>
-        <div>
-          {/* Eyebrow label */}
-          <p style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: 12,
-            fontWeight: 500,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: "#C5401A",
-            marginBottom: 16
-          }}>
-            Ф-23-1К · КарГУ · 2026
-          </p>
-
-          {/* Big heading */}
-          <h1 style={{
-            fontFamily: "'Playfair Display', Georgia, serif",
-            fontSize: "clamp(48px, 8vw, 96px)",
-            fontWeight: 700,
-            lineHeight: 1.05,
-            letterSpacing: "-0.01em",
-            color: "var(--color-text)",
-            marginBottom: 32,
-            maxWidth: 800
-          }}>
-            БІЗ ТУРАЛЫ
-          </h1>
-
-          {/* Description paragraph */}
-          <p style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: 14,
-            fontWeight: 500,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            lineHeight: 1.9,
-            color: "var(--color-text)",
-            maxWidth: 720
-          }}>
-            БІЗ Е.А.БӨКЕТОВ АТЫНДАҒЫ ФИЛОСОФИЯ ЖӘНЕ ПСИХОЛОГИЯ 
-            ФАКУЛЬТЕТІНІҢ Ф-23-1К АТАЛАТЫН 3 КУРС СТУДЕНТТЕРІМІЗ. 
-            БІЗДІҢ ТОБЫМЫЗДЫҢ ЕРЕКШЕЛІГІ БІЗДІҢ АЗШЫЛДЫҒЫМЫЗ, 
-            ИНДИВИДУАЛДЫ ТОП БОЛҒАНЫМЫЗ. КУРАТОРЫМЫЗ БОЛСА 
-            МАРАТ ЖҮМАГЕЛЬДИНОВ. БІЗДІҢ ОҚУ БАҒДАРЛАМАМЫЗДЫҢ 
-            ЕРЕКШЕЛІГІ НАҚТЫ КЛАССИКАЛЫҚ ФИЛОСОФИЯНЫ ЖӘНЕ 
-            БІЛІМГЕ ДЕГЕН ҚҰШТАРЛЫҚТЫ НЕГІЗ ҚЫЛУ, ҚАЗАҚСТАН 
-            ПРОГРЕССИВТІ ҚОҒАМЫНЫҢ БЕТІ БОЛУ.
-          </p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.3 }}
+            className="mt-6 max-w-[680px] font-ui text-[14px] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]"
+          >
+            Қазақстан философия студенттерінің платформасы
+          </motion.p>
         </div>
       </section>
 
-      {/* ─── SECTION 2: ЖОБА МАҚСАТЫ — image + text ─── */}
-      <section className="about-section-grid" style={{
-        borderBottom: "1px solid var(--color-divider)",
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: "clamp(48px, 6vw, 80px) clamp(24px, 6vw, 80px)",
-        display: "grid",
-        gap: "clamp(32px, 4vw, 64px)",
-        alignItems: "center"
-      }}>
-        {/* Image */}
-        <div style={{ position: "relative", overflow: "hidden" }}>
-          <Image
-            src="https://picsum.photos/seed/kargu-university/800/600"
-            alt="Е.А.Бөкетов атындағы КарГУ"
-            width={800}
-            height={600}
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            style={{
-              width: "100%",
-              height: "auto",
-              display: "block",
-              filter: "grayscale(20%)",
-              transition: "filter 400ms ease"
-            }}
-            className="hover:filter-[grayscale(0%)]"
-          />
-        </div>
-
-        {/* Text */}
-        <div>
-          <p style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: "#C5401A",
-            marginBottom: 12
-          }}>
-            Жоба туралы
-          </p>
-
-          <h2 style={{
-            fontFamily: "'Playfair Display', Georgia, serif",
-            fontSize: "clamp(28px, 4vw, 48px)",
-            fontWeight: 700,
-            lineHeight: 1.1,
-            color: "var(--color-text)",
-            marginBottom: 24,
-            letterSpacing: "-0.01em"
-          }}>
-            ЖОБА МАҚСАТЫ
-          </h2>
-
-          <p style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: 13,
-            fontWeight: 500,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-            lineHeight: 1.85,
-            color: "var(--color-text-muted)"
-          }}>
-            БІЗДІҢ ЖОБА — БҮКІЛ ҚАЗАҚСТАН БОЙЫНША ФИЛОСОФИЯ 
-            СТУДЕНТТЕРІН БІРІКТІРЕТІН ЗАМАНАУИ ОНЛАЙН-ПЛАТФОРМА 
-            ҚҰРУҒА БАҒЫТТАЛҒАН. САЙТТЫҢ НЕГІЗГІ МАҚСАТЫ — 
-            СТУДЕНТТЕР АРАСЫНДА ТҰРАҚТЫ БАЙЛАНЫС ОРНАТЫП, 
-            ОРТАҚ ИНТЕЛЛЕКТУАЛДЫ КЕҢІСТІК ҚАЛЫПТАСТЫРУ. 
-            ПЛАТФОРМА АРҚЫЛЫ ҚАТЫСУШЫЛАР АКАДЕМИЯЛЫҚ 
-            МАТЕРИАЛДАРМЕН АЛМАСЫП, ПІКІРТАЛАСТАР ҰЙЫМДАСТЫРЫП, 
-            БІРЛЕСКЕН ЖОБАЛАРДЫ ЖҮЗЕГЕ АСА АЛАДЫ.
-          </p>
+      <section className="bg-[color:var(--color-bg)] px-6 py-24">
+        <div className="mx-auto w-full max-w-[1120px]">
+          <FadeUp>
+            <h2 className="font-display text-[clamp(2rem,4.8vw,4.1rem)] text-[color:var(--color-text)]">
+              Біздің миссия
+            </h2>
+            <p className="mt-7 max-w-[860px] font-ui text-[15px] leading-[1.9] uppercase tracking-[0.07em] text-[color:var(--color-text-muted)]">
+              Философияны барлығына қолжетімді ету және Қазақстанның әр аймағындағы студенттерді бір ортаға жинау.
+              Біз ашық пікірталасқа, академиялық еркіндікке және сапалы білім алмасуға негізделген цифрлық орта құрамыз.
+            </p>
+          </FadeUp>
         </div>
       </section>
 
-      {/* ─── SECTION 3: БІЗДІҢ СТРАТЕГИЯМЫЗ — numbered list ─── */}
-      <section style={{
-        borderBottom: "1px solid var(--color-divider)",
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: "clamp(48px, 6vw, 80px) clamp(24px, 6vw, 80px)",
-      }}>
-        <div>
-          <h2 style={{
-            fontFamily: "'Playfair Display', Georgia, serif",
-            fontSize: "clamp(28px, 4vw, 48px)",
-            fontWeight: 700,
-            letterSpacing: "-0.01em",
-            color: "var(--color-text)",
-            marginBottom: 40
-          }}>
-            БІЗДІҢ СТРАТЕГИЯМЫЗ:
-          </h2>
-
-          {/* Strategy items */}
-          {[
-            'ӘЛЕУМЕТТІК ЖЕЛІЛЕРДЕГІ МЕДИА КОНТЕНТТІ КӘСІБИ ДЕҢГЕЙГЕ КӨТЕРУ',
-            'ФАКУЛЬТЕТ БЛОГЕРЛЕРІМЕН СЕРІКТЕСТІК ОРНАТУ',
-            'ЖОБАЛАРДЫ ТИІМДІ ЖАРНАМАЛАУ',
-            'ФИЛОСОФИЯ ЖӘНЕ ПСИХОЛОГИЯ ФАКУЛЬТЕТІН ҚАРАҒАНДЫДАН ТЫС АЙМАҚТАРДА ТАНЫМАЛ ЕТУ',
-            'ФИЛОСОФТАР АРАСЫНДА ТҰРАҚТЫ КОМЬЮНИТИ ҚАЛЫПТАСТЫРУ'
-          ].map((item, index) => (
-            <div
-              key={index}
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 24,
-                padding: "20px 0",
-                borderTop: "1px solid var(--color-divider)",
-                cursor: "default"
-              }}
-            >
-              {/* Number */}
-              <span style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#C5401A",
-                letterSpacing: "0.1em",
-                minWidth: 28,
-                paddingTop: 2
-              }}>
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              {/* Text */}
-              <span style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: 13,
-                fontWeight: 500,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                lineHeight: 1.7,
-                color: "var(--color-text)"
-              }}>
-                {item}
-              </span>
-            </div>
-          ))}
+      <section className="border-y border-[color:var(--color-divider)] bg-[color:var(--color-surface-2)] px-6 py-20">
+        <div className="mx-auto w-full max-w-[1120px]">
+          <FadeUp>
+            <p className="mb-8 font-ui text-[11px] uppercase tracking-[0.16em] text-[color:var(--color-primary)]">Қауымдастық статистикасы</p>
+          </FadeUp>
+          <div className="grid gap-4 md:grid-cols-3">
+            <CountUp value={500} suffix="+" label="Студент" />
+            <CountUp value={120} suffix="+" label="Талқылау тақырыбы" />
+            <CountUp value={40} suffix="+" label="Автор" />
+          </div>
         </div>
       </section>
 
-      {/* ─── SECTION 4: КТО МЫ — team stats ─── */}
-      <section style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: "clamp(48px, 6vw, 80px) clamp(24px, 6vw, 80px)",
-        borderBottom: "1px solid var(--color-divider)"
-      }}>
-        <div
-          className="about-stats-grid"
-          style={{
-            display: "grid",
-            gap: "1px",
-            background: "var(--color-divider)"
-          }}
-        >
-          {[
-            { number: "3", label: "КУРС" },
-            { number: "Ф-23-1К", label: "ТОП АТАУЫ" },
-            { number: "2026", label: "ЖЫЛ" },
-            { number: "КарГУ", label: "УНИВЕРСИТЕТ" }
-          ].map((stat, i) => (
-            <div
-              key={i}
-              style={{
-                background: "var(--color-bg)",
-                padding: "clamp(32px, 4vw, 48px)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 8
-              }}
-            >
-              <span style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(32px, 5vw, 56px)",
-                fontWeight: 700,
-                color: "var(--color-text)",
-                lineHeight: 1
-              }}>
-                {stat.number}
-              </span>
-              <span style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: 11,
-                fontWeight: 500,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: "var(--color-text-muted)"
-              }}>
-                {stat.label}
-              </span>
-            </div>
-          ))}
+      <section className="bg-[color:var(--color-bg)] px-6 py-24">
+        <div className="mx-auto w-full max-w-[1120px]">
+          <FadeUp>
+            <h3 className="font-display text-[clamp(1.8rem,4vw,3.2rem)] text-[color:var(--color-text)]">
+              Команда
+            </h3>
+          </FadeUp>
+
+          <motion.div
+            variants={teamContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="mt-10 grid gap-5 md:grid-cols-2"
+          >
+            {teamMembers.map((member) => (
+              <motion.article
+                key={member.name}
+                variants={teamItem}
+                className="rounded-[18px] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6"
+              >
+                <p className="font-display text-[30px] leading-[1.02] text-[color:var(--color-text)]">{member.name}</p>
+                <p className="mt-3 font-ui text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-primary)]">{member.role}</p>
+              </motion.article>
+            ))}
+          </motion.div>
         </div>
       </section>
-
-      {/* ─── SECTION 5: CTA — back to blog ─── */}
-      <section style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: "clamp(48px, 6vw, 80px) clamp(24px, 6vw, 80px)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        textAlign: "center",
-        gap: 24
-      }}>
-        <p
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: "var(--color-text-muted)"
-          }}
-        >
-          Философияны бірге зерттейік
-        </p>
-
-        <Link
-          href="/category/maqalalar"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "14px 32px",
-            border: "1.5px solid #C5401A",
-            color: "#C5401A",
-            fontFamily: "var(--font-ui)",
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            textDecoration: "none",
-            transition: "background 200ms, color 200ms"
-          }}
-          className="hover:bg-[#C5401A] hover:text-white"
-        >
-          ← МАҚАЛАЛАРҒА ОРАЛУ
-        </Link>
-      </section>
-
-    </main>
+    </div>
   );
 }

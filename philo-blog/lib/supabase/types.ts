@@ -39,24 +39,28 @@ export type Database = {
           name: string;
           slug: string;
           color: string | null;
+          type: string | null;
         };
         Insert: {
           id?: string;
           name: string;
           slug: string;
           color?: string | null;
+          type?: string | null;
         };
         Update: {
           id?: string;
           name?: string;
           slug?: string;
           color?: string | null;
+          type?: string | null;
         };
         Relationships: [];
       };
       posts: {
         Row: {
           id: string;
+          created_at: string;
           title: string;
           slug: string;
           excerpt: string | null;
@@ -69,9 +73,17 @@ export type Database = {
           lang: string | null;
           views: number | null;
           published_at: string | null;
+          source_url: string | null;
+          author_name: string | null;
+          audio_url: string | null;
+          duration: string | null;
+          guests: string | null;
+          file_url: string | null;
+          level: string | null;
         };
         Insert: {
           id?: string;
+          created_at?: string;
           title: string;
           slug: string;
           excerpt?: string | null;
@@ -84,9 +96,17 @@ export type Database = {
           lang?: string | null;
           views?: number | null;
           published_at?: string | null;
+          source_url?: string | null;
+          author_name?: string | null;
+          audio_url?: string | null;
+          duration?: string | null;
+          guests?: string | null;
+          file_url?: string | null;
+          level?: string | null;
         };
         Update: {
           id?: string;
+          created_at?: string;
           title?: string;
           slug?: string;
           excerpt?: string | null;
@@ -99,6 +119,13 @@ export type Database = {
           lang?: string | null;
           views?: number | null;
           published_at?: string | null;
+          source_url?: string | null;
+          author_name?: string | null;
+          audio_url?: string | null;
+          duration?: string | null;
+          guests?: string | null;
+          file_url?: string | null;
+          level?: string | null;
         };
         Relationships: [];
       };

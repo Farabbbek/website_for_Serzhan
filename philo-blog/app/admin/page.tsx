@@ -14,22 +14,29 @@ const statCards = [
 
 export default function AdminDashboardPage() {
   return (
-    <section className="flex flex-col gap-[var(--space-8)]">
+    <section className="flex w-full flex-col gap-[var(--space-8)]">
       <div className="flex flex-col gap-[var(--space-3)]">
         <h1 className="font-display text-[length:var(--text-xl)] text-[color:var(--color-text)]">
           Dashboard
         </h1>
-        <p className="max-w-[56ch] font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
+        <p className="font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
           Редакция ағымын, жарияланған материалдар санын және соңғы белсенділікті осы жерден бақылай аласыз.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2 xl:grid-cols-3">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: 16,
+          width: "100%",
+        }}
+      >
         {statCards.map((card) => (
           <article
             key={card.label}
             className="border border-[color:var(--color-divider)] bg-[color:var(--color-surface)] p-[var(--space-6)]"
-            style={{ borderRadius: "var(--radius-lg)" }}
+            style={{ borderRadius: "var(--radius-lg)", minWidth: 0, overflow: "hidden" }}
           >
             <p className="font-ui text-[length:var(--text-xs)] uppercase tracking-[0.16em] text-[color:var(--color-text-faint)]">
               {card.label}

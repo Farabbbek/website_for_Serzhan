@@ -11,7 +11,7 @@ type HomePageProps = {
 
 export const metadata: Metadata = {
   title: "ZERDE Blog",
-  description: "Соңғы жарияланған философиялық мақалалар.",
+  description: "Соңғы қосылған жарияланымдар.",
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
@@ -27,14 +27,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <div className="flex items-center gap-[var(--space-4)]">
         <h1 className="font-ui text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-muted)]">
-          СОҢҒЫ МАҚАЛАЛАР
+          СОҢҒЫ ҚОСЫЛҒАНДАР
         </h1>
         <div className="h-px flex-1 bg-[color:var(--color-divider)]" />
       </div>
 
       {posts.length === 0 ? (
         <p className="mt-[var(--space-8)] font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
-          Жарияланған мақалалар әзірге табылмады.
+          Жарияланымдар әзірге табылмады.
         </p>
       ) : (
         <div className="mt-[var(--space-8)] grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">

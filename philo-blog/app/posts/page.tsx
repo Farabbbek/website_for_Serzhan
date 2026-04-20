@@ -13,25 +13,42 @@ export default async function PostsPage() {
 
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
-      <div className="flex flex-col gap-[var(--space-8)]">
-        <div className="flex items-center gap-[var(--space-4)]">
-          <h1 className="font-ui text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-muted)]">
-            ЖУРНАЛ
-          </h1>
-          <div className="h-px flex-1 bg-[color:var(--color-divider)]" />
-        </div>
+      <div className="flex flex-col gap-(--space-8)">
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(2rem, 5vw, 4rem)",
+            fontWeight: 800,
+            color: "var(--color-text)",
+            marginBottom: 8,
+          }}
+        >
+          ЖУРНАЛ
+        </h1>
 
-        <p className="max-w-[60ch] font-body text-[length:var(--text-base)] leading-8 text-[color:var(--color-text-muted)]">
+        <p
+          className="max-w-[60ch]"
+          style={{
+            fontSize: "var(--text-base)",
+            color: "var(--color-text-muted)",
+            marginBottom: 40,
+          }}
+        >
           Философия, цифрлық мәдениет, этика және редакциялық ой туралы барлық
           жарияланған материалдар бір жерде жинақталды.
         </p>
 
         {posts.length === 0 ? (
-          <p className="font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
+          <p
+            style={{
+              fontSize: "var(--text-base)",
+              color: "var(--color-text-muted)",
+            }}
+          >
             Жарияланған мақалалар әзірге табылмады.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-(--space-8) md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post, index) => (
               <PostCard
                 key={post.id}

@@ -26,7 +26,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <div className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
-      <section className="bg-[color:var(--color-primary)] px-[var(--space-6)] py-[clamp(var(--space-10),5vw,var(--space-16))] text-[color:var(--color-text-inverse)]">
+      <section className="bg-[color:var(--color-secondary)] px-[var(--space-6)] py-[clamp(var(--space-10),5vw,var(--space-16))] text-[color:var(--color-text-inverse)]">
         <div className="mx-auto flex max-w-[var(--content-width)] flex-col gap-[var(--space-4)]">
           <p className="font-ui text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-inverse)]/80">
             Санат

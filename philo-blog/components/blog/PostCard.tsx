@@ -103,7 +103,11 @@ export function PostCard({
   variant = "default",
 }: PostCardProps) {
   const publishedDate = formatPublishedDate(post.published_at);
-  const authorName = post.profiles?.full_name ?? "Редакция";
+  const authorName =
+    post.author_name?.trim() ||
+    post.profiles?.full_name ||
+    post.profiles?.username ||
+    "Редакция";
 
   if (variant === "compact") {
     return (

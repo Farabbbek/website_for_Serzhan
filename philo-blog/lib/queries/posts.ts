@@ -14,6 +14,9 @@ type PostRow = {
   excerpt: string | null;
   content: string;
   cover_url: string | null;
+  file_url: string | null;
+  source_url: string | null;
+  author_name: string | null;
   type: string | null;
   status: string | null;
   lang: string | null;
@@ -50,6 +53,9 @@ function mapPost(
     excerpt: row.excerpt ?? "",
     content: row.content,
     cover_url: row.cover_url,
+    file_url: row.file_url,
+    source_url: row.source_url,
+    author_name: row.author_name,
     published_at: row.published_at ?? new Date().toISOString(),
     views_count: row.views ?? 0,
     type: row.type,
@@ -129,7 +135,7 @@ export async function getPosts({
   let query = supabase
     .from("posts")
     .select(
-      "id,title,slug,excerpt,content,cover_url,type,status,lang,views,published_at,category_id,author_id",
+      "id,title,slug,excerpt,content,cover_url,file_url,source_url,author_name,type,status,lang,views,published_at,category_id,author_id",
     )
     .eq("status", "published")
     .order("published_at", { ascending: false });
@@ -179,7 +185,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   const { data, error } = await supabase
     .from("posts")
     .select(
-      "id,title,slug,excerpt,content,cover_url,type,status,lang,views,published_at,category_id,author_id",
+      "id,title,slug,excerpt,content,cover_url,file_url,source_url,author_name,type,status,lang,views,published_at,category_id,author_id",
     )
     .eq("slug", slug)
     .eq("status", "published")

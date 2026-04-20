@@ -52,7 +52,7 @@ const navRoutes: Record<string, string> = {
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 function NavCellItem({
   label,
@@ -94,6 +94,22 @@ function NavCellItem({
       }}
       whileHover={!isActive ? { opacity: 0.6 } : {}}
     >
+      {!isActive ? (
+        <motion.span
+          style={{
+            position: "absolute",
+            bottom: -2,
+            left: 0,
+            height: 1,
+            background: "currentColor",
+            width: "100%",
+            zIndex: 2,
+          }}
+          initial={{ scaleX: 0, transformOrigin: "left" }}
+          whileHover={{ scaleX: 1 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        />
+      ) : null}
       <AnimatePresence>
         {isActive ? (
           <motion.div
@@ -662,7 +678,7 @@ export function Header() {
             <nav
               aria-label="Category navigation"
               className="h-10 border-b border-divider transition-colors duration-300 xl:h-12"
-              style={{ background: theme === "dark" ? "#171614" : "#ffffff" }}
+              style={{ background: "var(--color-bg)" }}
             >
               <div className="mx-auto flex h-full max-w-350 border-x border-divider">
                 <div
@@ -674,10 +690,8 @@ export function Header() {
                     const isHovered = label === hoveredCategory;
 
                     const textColor = isActive
-                      ? "#ffffff"
-                      : theme === "dark"
-                        ? "rgba(255,255,255,0.7)"
-                        : "rgba(0,0,0,0.7)";
+                      ? "var(--color-text)"
+                      : "var(--color-text-muted)";
 
                     return (
                       <MotionLink
@@ -706,8 +720,8 @@ export function Header() {
                         {isActive ? (
                           <motion.div
                             layoutId="category-active-bg"
-                            className="absolute inset-0 z-[-1]"
-                            style={{ background: "#C5401A" }}
+                            className="absolute inset-0 z-0"
+                            style={{ background: "rgba(197,64,26,0.12)" }}
                             transition={{ type: "spring", stiffness: 380, damping: 35 }}
                           />
                         ) : null}

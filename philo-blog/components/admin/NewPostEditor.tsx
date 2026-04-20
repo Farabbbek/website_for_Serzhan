@@ -178,11 +178,12 @@ function renderPreview(content: string) {
   return elements;
 }
 
-export function NewPostEditor() {
+export function NewPostEditor({ defaultType }: { defaultType?: string }) {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const [excerpt, setExcerpt] = useState("");
+  const [postType] = useState(defaultType || "article");
   const [content, setContent] = useState(
     "## Кіріспе\n\nМұнда мақалаңыздың алғашқы бөлімін жазыңыз.\n\n### Негізгі ой\n\nНегізгі аргументті осында жалғастырыңыз.",
   );
@@ -289,6 +290,7 @@ export function NewPostEditor() {
       status,
       categorySlug,
       selectedTags,
+      postType,
     };
   };
 
@@ -296,9 +298,14 @@ export function NewPostEditor() {
     <div className="grid grid-cols-1 gap-[var(--space-8)] lg:grid-cols-[3fr_2fr]">
       <section className="min-w-0">
         <div className="flex items-center justify-between gap-4 border-b border-[color:var(--color-divider)] pb-[var(--space-4)]">
-          <p className="font-ui text-[length:var(--text-xs)] uppercase tracking-[0.16em] text-[color:var(--color-text-faint)]">
-            Жаңа мақала редакторы
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="font-ui text-[length:var(--text-xs)] uppercase tracking-[0.16em] text-[color:var(--color-text-faint)]">
+              {postType === "article" ? "Жаңа мақала" : postType === "news" ? "Жаңалық" : postType === "podcast" ? "Подкаст" : postType === "material" ? "Материал" : "Редактор"}
+            </p>
+            <span className="inline-flex items-center rounded-full bg-[color:var(--color-primary-highlight)] px-2.5 py-0.5 font-ui text-[10px] font-semibold uppercase tracking-wider text-[color:var(--color-primary)]">
+              {postType}
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => setIsPreview((current) => !current)}

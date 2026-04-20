@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Footer from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
-import PageTransition from "@/components/layout/PageTransition";
+import LoadingScreen from "@/components/LoadingScreen";
+import PageCurtain from "@/components/PageCurtain";
+import RootLayoutClient from "@/components/layout/RootLayoutClient";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import "./globals.css";
 
@@ -45,17 +45,15 @@ export default function RootLayout({
       </head>
       <body className="font-body min-h-full flex flex-col">
         <ThemeProvider>
+          <LoadingScreen />
+          <PageCurtain />
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[80] focus:rounded-full focus:bg-[color:var(--color-surface)] focus:px-4 focus:py-3 focus:font-ui focus:text-[length:var(--text-sm)] focus:font-semibold focus:text-[color:var(--color-text)] focus:no-underline"
           >
             Skip to content
           </a>
-          <Header />
-          <main id="main-content" className="flex-1 py-8 md:py-12">
-            <PageTransition>{children}</PageTransition>
-          </main>
-          <Footer />
+          <RootLayoutClient>{children}</RootLayoutClient>
         </ThemeProvider>
       </body>
     </html>

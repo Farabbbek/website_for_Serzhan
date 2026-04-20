@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import LoadingScreen from "@/components/LoadingScreen";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 import {
@@ -319,11 +321,7 @@ export default function ProfilePage() {
     isSavingPassword || newPassword.length === 0 || newPassword !== confirmPassword || strengthCount < 2;
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-20 text-[color:var(--color-text-muted)] text-[14px]">
-        Жүктелуде...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user) return null;
@@ -336,10 +334,13 @@ export default function ProfilePage() {
         <div className="hidden md:flex flex-col items-center mb-[12px]">
           <div className="w-[80px] h-[80px] rounded-[22px] border-[3px] border-[color:var(--color-border)] overflow-hidden mx-auto mb-[12px] bg-[color:var(--color-surface-offset)] text-[color:var(--color-text)] flex items-center justify-center text-2xl font-bold">
             {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Avatar"
-                className="w-full h-full object-cover"
+              <Image
+                src={avatarUrl || "/default-avatar.png"}
+                alt="Profile avatar"
+                width={80}
+                height={80}
+                className="w-full h-full"
+                style={{ borderRadius: "50%", objectFit: "cover" }}
               />
             ) : (
               displayInitial
@@ -470,10 +471,13 @@ export default function ProfilePage() {
                 className="w-[72px] h-[72px] rounded-[20px] border border-[color:var(--color-border)] overflow-hidden bg-[color:var(--color-surface-offset)] text-[color:var(--color-text)] flex items-center justify-center text-3xl font-bold shrink-0 cursor-pointer"
               >
                 {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
+                  <Image
+                    src={avatarUrl || "/default-avatar.png"}
+                    alt="Profile avatar"
+                    width={80}
+                    height={80}
+                    className="w-full h-full"
+                    style={{ borderRadius: "50%", objectFit: "cover" }}
                   />
                 ) : (
                   displayInitial
@@ -486,7 +490,7 @@ export default function ProfilePage() {
                   disabled={isUploadingAvatar}
                   className="flex items-center justify-center gap-[6px] py-[8px] px-[16px] border border-[color:var(--color-border)] rounded-[8px] text-[13px] bg-transparent cursor-pointer text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-offset)] transition-colors disabled:opacity-50 w-fit"
                 >
-                  <Camera size={16} /> {isUploadingAvatar ? "Жүктелуде..." : "Аватарды өзгерту"}
+                  <Camera size={16} /> Аватарды өзгерту
                 </button>
                 <p className="text-[11px] text-[color:var(--color-text-muted)] mt-[6px]">JPG, PNG, WEBP · Максимум 5MB</p>
                 <input
