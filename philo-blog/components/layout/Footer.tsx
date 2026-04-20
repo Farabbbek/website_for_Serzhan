@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageProvider";
+import { withYear } from "@/lib/i18n/messages";
 
 type FooterLink = {
   label: string;
@@ -17,45 +19,23 @@ type FooterColumn = {
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const { m } = useLanguage();
 
   const columns: FooterColumn[] = [
     {
       title: "ZERDE",
       links: [
-        { label: "Басты бет", href: "/" },
-        { label: "Мақалалар", href: "/category/maqalalar" },
-        { label: "Цифр", href: "/category/cifr" },
-        { label: "Этика", href: "/category/etika" },
+        { label: m.footer.home, href: "/" },
+        { label: m.footer.articles, href: "/category/maqalalar" },
       ],
     },
     {
-      title: "ПЛАТФОРМА",
+      title: m.footer.platform,
       links: [
-        { label: "Біз туралы", href: "/about" },
-        { label: "Мақалалар", href: "/category/maqalalar" },
-        { label: "Форум", href: "/forum", soon: true },
-        { label: "Подкасттар", href: "/podcasts" },
-      ],
-    },
-    {
-      title: "БАЙЛАНЫС",
-      links: [
-        {
-          label: "Telegram",
-          href: "https://t.me/zerde_philosophy",
-          external: true,
-        },
-        {
-          label: "Instagram",
-          href: "https://instagram.com/zerde.philosophy",
-          external: true,
-        },
-        {
-          label: "YouTube",
-          href: "https://youtube.com/@zerde",
-          external: true,
-        },
-        { label: "Email", href: "mailto:zerde@kargu.kz", external: true },
+        { label: m.footer.about, href: "/about" },
+        { label: m.footer.articles, href: "/category/maqalalar" },
+        { label: m.footer.forum, href: "/forum", soon: true },
+        { label: m.footer.podcasts, href: "/podcasts" },
       ],
     },
   ];
@@ -112,7 +92,7 @@ export default function Footer() {
               maxWidth: 200,
             }}
           >
-            Қазақстан философия студенттерінің платформасы. КарГУ · Ф-23-1К
+            {m.footer.zerde}
           </p>
         </div>
 
@@ -169,7 +149,7 @@ export default function Footer() {
                     }}
                   >
                     {link.label}
-                    {link.soon ? <span className="soon-tag">Soon</span> : null}
+                    {link.soon ? <span className="soon-tag">{m.footer.soon}</span> : null}
                   </Link>
                 </li>
               ))}
@@ -200,7 +180,7 @@ export default function Footer() {
             letterSpacing: "0.06em",
           }}
         >
-          © {year} ZERDE · Е.А.Бөкетов атындағы КарГУ
+          {withYear(m.footer.copyright, year)}
         </p>
         <p
           style={{
@@ -210,7 +190,7 @@ export default function Footer() {
             letterSpacing: "0.06em",
           }}
         >
-          КАЗ / РУС / ENG
+          {m.footer.locales}
         </p>
       </div>
     </motion.footer>

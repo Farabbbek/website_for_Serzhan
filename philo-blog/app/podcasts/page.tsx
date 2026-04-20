@@ -1,4 +1,5 @@
 import PodcastsPageClient from "@/components/blog/PodcastsPageClient";
+import { getServerMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
@@ -9,6 +10,7 @@ type PostRow = Database["public"]["Tables"]["posts"]["Row"] & {
 };
 
 export default async function PodcastsPage() {
+  const { m } = await getServerMessages();
   const supabase = await createClient();
   const { data } = supabase
     ? await supabase
@@ -23,7 +25,7 @@ export default async function PodcastsPage() {
   if (posts.length === 0) {
     return (
       <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
-        <p className="home-empty">Подкасттар әзірге табылмады.</p>
+        <p className="home-empty">{m.podcasts.noItems}</p>
       </section>
     );
   }

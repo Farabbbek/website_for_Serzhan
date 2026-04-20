@@ -12,41 +12,11 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageProvider";
 import { useTheme } from "@/contexts/ThemeProvider";
+import { localeButtonLabels, type Locale } from "@/lib/i18n/config";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
-
-const leftMainLinks = [
-  { href: "/about", label: "БІЗ ТУРАЛЫ" },
-  { href: "/forum", label: "ФОРУМ" },
-];
-
-const rightMainLinks = [
-  { href: "/auth/login", label: "КІРУ" },
-  { href: "/connect", label: "ЖАЗЫЛУ" },
-];
-
-const categories = [
-  { label: "МАҚАЛАЛАР", href: "/category/maqalalar" },
-  { label: "ЖАҢАЛЫҚТАР", href: "/news" },
-  { label: "МАТЕРИАЛДАР", href: "/materials" },
-  { label: "ПОДКАСТТАР", href: "/podcasts" },
-];
-
-const mobileOverlayLinks = [
-  { href: "/", label: "БАСТЫ БЕТ" },
-  { href: "/category/maqalalar", label: "МАҚАЛАЛАР" },
-  { href: "/about", label: "БІЗ ТУРАЛЫ" },
-  { href: "/auth/login", label: "КІРУ" },
-  { href: "/connect", label: "ЖАЗЫЛУ" },
-];
-
-const navRoutes: Record<string, string> = {
-  "БІЗ ТУРАЛЫ": "/about",
-  "ФОРУМ": "/forum",
-  "КІРУ": "/auth/login",
-  "ЖАЗЫЛУ": "/connect",
-};
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -200,6 +170,7 @@ function Logo({ mobile = false }: { mobile?: boolean }) {
 
 function ThemeButton() {
   const { theme, toggleTheme } = useTheme();
+  const { m } = useLanguage();
 
   return (
     <button
@@ -215,7 +186,7 @@ function ThemeButton() {
         justifyContent: "center",
         cursor: "pointer",
       }}
-      aria-label="Toggle theme"
+      aria-label={m.nav.toggleTheme}
     >
       <AnimatePresence mode="wait" initial={false}>
         {theme === "dark" ? (
@@ -247,11 +218,11 @@ function ThemeButton() {
 }
 
 function LanguageSwitcher() {
-  const [activeLang, setActiveLang] = useState("KAZ");
+  const { locale, setLocale } = useLanguage();
   const { theme } = useTheme();
   const separatorColor = theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)";
 
-  const langs = ["RUS", "KAZ", "ENG"];
+  const langs: Locale[] = ["ru", "kk", "en"];
 
   return (
     <div
@@ -262,16 +233,16 @@ function LanguageSwitcher() {
         <div key={lang} className="flex items-center">
           <motion.button
             type="button"
-            onClick={() => setActiveLang(lang)}
+            onClick={() => setLocale(lang)}
             className="relative px-2 py-1 transition-colors"
             style={{
-              color: activeLang === lang ? "var(--color-text)" : "var(--color-text-muted)",
-              fontWeight: activeLang === lang ? 600 : 400,
+              color: locale === lang ? "var(--color-text)" : "var(--color-text-muted)",
+              fontWeight: locale === lang ? 600 : 400,
             }}
             whileHover={{ opacity: 0.8 }}
             whileTap={{ scale: 0.95 }}
           >
-            {activeLang === lang ? (
+            {locale === lang ? (
               <motion.div
                 layoutId="active-lang-indicator"
                 className="absolute -bottom-1 left-2 right-2 h-0.5 rounded-full"
@@ -279,7 +250,7 @@ function LanguageSwitcher() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             ) : null}
-            {lang}
+            {localeButtonLabels[lang]}
           </motion.button>
           {idx < langs.length - 1 ? (
             <span style={{ color: separatorColor, margin: "0 2px" }}>|</span>
@@ -317,6 +288,53 @@ export function Header() {
   const [syncedAvatarUrl, setSyncedAvatarUrl] = useState<string | null>(null);
   const [syncedFullName, setSyncedFullName] = useState<string | null>(null);
   const { theme } = useTheme();
+  const { locale, m } = useLanguage();
+  const localLabels = {
+    kk: {
+      avatar: "Профиль аватары",
+      categoryNav: "Санат навигациясы",
+    },
+    ru: {
+      avatar: "Аватар профиля",
+      categoryNav: "Навигация по категориям",
+    },
+    en: {
+      avatar: "Profile avatar",
+      categoryNav: "Category navigation",
+    },
+  }[locale];
+
+  const leftMainLinks = [
+    { href: "/about", label: m.nav.about },
+    { href: "/forum", label: m.nav.forum },
+  ];
+
+  const rightMainLinks = [
+    { href: "/auth/login", label: m.nav.login },
+    { href: "/connect", label: m.nav.subscribe },
+  ];
+
+  const categories = [
+    { label: m.nav.articles, href: "/category/maqalalar" },
+    { label: m.nav.news, href: "/news" },
+    { label: m.nav.materials, href: "/materials" },
+    { label: m.nav.podcasts, href: "/podcasts" },
+  ];
+
+  const mobileOverlayLinks = [
+    { href: "/", label: m.nav.home },
+    { href: "/category/maqalalar", label: m.nav.articles },
+    { href: "/about", label: m.nav.about },
+    { href: "/auth/login", label: m.nav.login },
+    { href: "/connect", label: m.nav.subscribe },
+  ];
+
+  const navRoutes: Record<string, string> = {
+    [m.nav.about]: "/about",
+    [m.nav.forum]: "/forum",
+    [m.nav.login]: "/auth/login",
+    [m.nav.subscribe]: "/connect",
+  };
 
   const { scrollY } = useScroll();
   const smoothScrollY = useSpring(scrollY, {
@@ -435,13 +453,13 @@ export function Header() {
 
   const mobileLinks = authUser
     ? [
-        { href: "/", label: "БАСТЫ БЕТ" },
-        { href: "/category/maqalalar", label: "МАҚАЛАЛАР" },
-        { href: "/about", label: "БІЗ ТУРАЛЫ" },
-        { href: "/forum", label: "ФОРУМ" },
-        { href: "/profile", label: "ПРОФИЛЬ" },
-        ...(profile?.role === "admin" ? [{ href: "/admin", label: "АДМИН ПАНЕЛЬ" }] : []),
-        { href: "/connect", label: "ЖАЗЫЛУ" },
+        { href: "/", label: m.nav.home },
+        { href: "/category/maqalalar", label: m.nav.articles },
+        { href: "/about", label: m.nav.about },
+        { href: "/forum", label: m.nav.forum },
+        { href: "/profile", label: m.nav.profile },
+        ...(profile?.role === "admin" ? [{ href: "/admin", label: m.nav.admin }] : []),
+        { href: "/connect", label: m.nav.subscribe },
       ]
     : mobileOverlayLinks;
 
@@ -546,7 +564,7 @@ export function Header() {
                 overflow: "hidden",
               }}
               aria-expanded={isCategoryDropdownOpen}
-              aria-label="Toggle categories"
+              aria-label={m.nav.toggleCategories}
             >
               <motion.svg
                 width="18"
@@ -579,7 +597,7 @@ export function Header() {
                 <Link href="/profile" prefetch={true} style={{ display: "flex", alignItems: "center" }}>
                   <div
                     role="img"
-                    aria-label="avatar"
+                    aria-label={localLabels.avatar}
                     style={{
                       width: 44,
                       height: 44,
@@ -594,7 +612,7 @@ export function Header() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={avatarUrl}
-                        alt="avatar"
+                        alt={m.nav.profile}
                         width={44}
                         height={44}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -654,7 +672,7 @@ export function Header() {
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
                 className="inline-flex h-8.5 w-8.5 items-center justify-center rounded-full border border-border bg-transparent text-foreground transition-colors duration-150 ease-in-out hover:bg-surface-2"
-                aria-label="Open menu"
+                aria-label={m.nav.openMenu}
               >
                 <Menu size={22} />
               </button>
@@ -674,8 +692,8 @@ export function Header() {
             style={{ position: "relative", zIndex: 99 }}
           >
             <nav
-              aria-label="Category navigation"
-              className="h-10 border-b border-divider transition-colors duration-300 xl:h-12"
+              aria-label={localLabels.categoryNav}
+              className="category-nav-bar h-10 border-b border-divider transition-colors duration-300 xl:h-12"
               style={{ background: "var(--color-bg)" }}
             >
               <div className="mx-auto flex h-full max-w-350 border-x border-divider">
@@ -750,7 +768,7 @@ export function Header() {
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 className="inline-flex h-8.5 w-8.5 items-center justify-center rounded-full border border-border bg-transparent text-foreground transition-colors duration-150 ease-in-out hover:bg-surface-2"
-                aria-label="Close menu"
+                aria-label={m.nav.closeMenu}
               >
                 <X size={22} />
               </button>
@@ -794,7 +812,7 @@ export function Header() {
                     className="block w-full border-b border-divider px-6 py-4 font-display text-left text-[28px] leading-[1.05] text-foreground"
                     style={{ background: "transparent" }}
                   >
-                    ШЫҒУ
+                    {m.nav.signOut}
                   </button>
                 </motion.div>
               ) : null}

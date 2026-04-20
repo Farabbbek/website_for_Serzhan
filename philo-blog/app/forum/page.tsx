@@ -1,4 +1,8 @@
-export default function ForumPage() {
+import { getServerMessages } from "@/lib/i18n/server";
+
+export default async function ForumPage() {
+  const { m } = await getServerMessages();
+
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
       <div className="mx-auto w-full max-w-[760px] px-6">
@@ -6,20 +10,19 @@ export default function ForumPage() {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[color:var(--color-primary)]" />
 
           <span className="inline-flex items-center border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-3 py-1 font-ui text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
-            Жақында
+            {m.forum.soon}
           </span>
 
           <h1 className="mt-[var(--space-5)] font-display text-[clamp(2rem,5vw,3.2rem)] leading-[1.02] tracking-[-0.02em] text-[color:var(--color-text)]">
-            Форум жақын арада іске қосылады
+            {m.forum.title}
           </h1>
 
           <p className="mx-auto mt-[var(--space-4)] max-w-[42ch] font-body text-[length:var(--text-base)] leading-[1.75] text-[color:var(--color-text-muted)]">
-            В ближайшее время здесь откроется площадка для дискуссий,
-            вопросов и обмена идеями.
+            {m.forum.description}
           </p>
 
           <p className="mt-[var(--space-6)] font-ui text-[length:var(--text-sm)] uppercase tracking-[0.16em] text-[color:var(--color-text-faint)]">
-            Следите за обновлениями ZERDE
+            {m.forum.follow}
           </p>
         </div>
       </div>

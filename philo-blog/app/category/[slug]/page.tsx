@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getServerMessages } from "@/lib/i18n/server";
 import { getPosts } from "@/lib/queries/posts";
 
 type CategoryPageProps = {
@@ -12,17 +13,68 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const { locale } = await getServerMessages();
+  const descriptions = {
+    kk: "Санат бойынша жарияланған мақалалар.",
+    ru: "Статьи, опубликованные в этой категории.",
+    en: "Articles published in this category.",
+  } as const;
 
   return {
     title: `${slug.toUpperCase()} | ZERDE Blog`,
-    description: "Санат бойынша жарияланған мақалалар.",
+    description: descriptions[locale],
   };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
+  const { locale } = await getServerMessages();
   const posts = await getPosts({ category: slug });
   const categoryTitle = posts[0]?.categories?.name ?? slug.toUpperCase();
+  const copy = {
+    kk: {
+      heroTitle: "МАҚАЛАЛАР",
+      heroSubtitle: "Редакциялық эсселер мен сын-пікірлер",
+      listTitle: "САНАТТАҒЫ МАҚАЛАЛАР",
+      articleCount: "мақала",
+      noArticlesTitle: "Әзірге мақалалар жоқ",
+      noArticlesText: "Бұл бөлім жақын арада жаңа материалдармен толығады.",
+      backHome: "Басты бетке оралу",
+      singleArticleTitle: "Бұл санатта әзірге бір ғана мақала бар",
+      singleArticleText: "Көп ұзамай жаңа жарияланымдар қосылады.",
+      editorial: "Редакция",
+      readFull: "Толық мәтінді ашып оқыңыз.",
+      readingMinutes: "мин оқу",
+    },
+    ru: {
+      heroTitle: "СТАТЬИ",
+      heroSubtitle: "Редакционные эссе и критические тексты",
+      listTitle: "СТАТЬИ В КАТЕГОРИИ",
+      articleCount: "статей",
+      noArticlesTitle: "Пока статей нет",
+      noArticlesText: "Этот раздел скоро пополнится новыми материалами.",
+      backHome: "Вернуться на главную",
+      singleArticleTitle: "В этой категории пока только одна статья",
+      singleArticleText: "Скоро здесь появятся новые публикации.",
+      editorial: "Редакция",
+      readFull: "Откройте материал, чтобы прочитать полный текст.",
+      readingMinutes: "мин чтения",
+    },
+    en: {
+      heroTitle: "ARTICLES",
+      heroSubtitle: "Editorial essays and critical reflections",
+      listTitle: "ARTICLES IN THIS CATEGORY",
+      articleCount: "articles",
+      noArticlesTitle: "No articles yet",
+      noArticlesText: "This section will be filled with new materials soon.",
+      backHome: "Back to home",
+      singleArticleTitle: "There is only one article in this category for now",
+      singleArticleText: "More publications will appear here soon.",
+      editorial: "Editorial",
+      readFull: "Open the article to read the full text.",
+      readingMinutes: "min read",
+    },
+  }[locale];
 
   const articlePosts = posts.filter((post) => {
     const normalizedType = (post.type ?? "").toLowerCase();
@@ -39,7 +91,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       return value;
     }
 
-    return parsed.toLocaleDateString("kk-KZ", {
+    const intlLocale = locale === "kk" ? "kk-KZ" : locale === "ru" ? "ru-RU" : "en-US";
+
+    return parsed.toLocaleDateString(intlLocale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -47,14 +101,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   };
 
   const resolveAuthor = (authorName: string | null | undefined, profileName: string | null | undefined) => {
-    return authorName?.trim() || profileName?.trim() || "Редакция";
+    return authorName?.trim() || profileName?.trim() || copy.editorial;
   };
 
   const resolveExcerpt = (excerpt: string | null | undefined, content: string | undefined, maxLength = 180) => {
     const source = (excerpt || content || "").replace(/\s+/g, " ").trim();
 
     if (!source) {
-      return "Толық мәтінді ашып оқыңыз.";
+      return copy.readFull;
     }
 
     if (source.length <= maxLength) {
@@ -68,7 +122,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     const source = (content || excerpt || "").replace(/\s+/g, " ").trim();
     const words = source ? source.split(" ").length : 0;
     const minutes = Math.max(1, Math.ceil(words / 220));
-    return `${minutes} мин оқу`;
+    return `${minutes} ${copy.readingMinutes}`;
   };
 
   const categoryLabel = categoryTitle.toUpperCase();
@@ -76,8 +130,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   return (
     <section className="category-articles-page">
       <header className="category-hero" aria-labelledby="category-title">
-        <h1 id="category-title" className="category-hero-title">МАҚАЛАЛАР</h1>
-        <p className="category-hero-subtitle">Редакциялық эсселер мен сын-пікірлер</p>
+        <h1 id="category-title" className="category-hero-title">{copy.heroTitle}</h1>
+        <p className="category-hero-subtitle">{copy.heroSubtitle}</p>
         <div className="category-hero-divider" aria-hidden="true" />
       </header>
 
@@ -116,23 +170,23 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       ) : null}
 
       <div className="category-list-header">
-        <h2 className="category-list-title">САНАТТАҒЫ МАҚАЛАЛАР</h2>
-        <span className="category-list-count">{articlePosts.length} мақала</span>
+        <h2 className="category-list-title">{copy.listTitle}</h2>
+        <span className="category-list-count">{articlePosts.length} {copy.articleCount}</span>
       </div>
 
       {articlePosts.length === 0 ? (
         <div className="category-empty-state">
           <span className="category-empty-icon" aria-hidden="true">✍️</span>
-          <h3>Әзірге мақалалар жоқ</h3>
-          <p>Бұл бөлім жақын арада жаңа материалдармен толығады.</p>
+          <h3>{copy.noArticlesTitle}</h3>
+          <p>{copy.noArticlesText}</p>
           <Link href="/" className="category-empty-link" prefetch>
-            Басты бетке оралу
+            {copy.backHome}
           </Link>
         </div>
       ) : remainingPosts.length === 0 ? (
         <div className="category-empty-state">
-          <h3>Бұл санатта әзірге бір ғана мақала бар</h3>
-          <p>Көп ұзамай жаңа жарияланымдар қосылады.</p>
+          <h3>{copy.singleArticleTitle}</h3>
+          <p>{copy.singleArticleText}</p>
         </div>
       ) : (
         <div className="category-articles-grid">

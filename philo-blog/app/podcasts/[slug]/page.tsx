@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type SyntheticEvent } from "react";
 import { Play, Pause, Volume2, Download, Clock, Users } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 
@@ -101,7 +102,17 @@ function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   );
 }
 
-function InstagramPlayer({ embedPath, title }: { embedPath: string; title: string }) {
+function InstagramPlayer({
+  embedPath,
+  title,
+  fallbackText,
+  directLinkText,
+}: {
+  embedPath: string;
+  title: string;
+  fallbackText: string;
+  directLinkText: string;
+}) {
   const postUrl = `https://www.instagram.com${embedPath}/`;
 
   return (
@@ -135,19 +146,43 @@ function InstagramPlayer({ embedPath, title }: { embedPath: string; title: strin
         />
       </div>
       <div style={{ marginTop: 10, fontSize: 12, color: "var(--color-text-muted)", textAlign: "center" }}>
-        Instagram ашылмаса, <a href={postUrl} target="_blank" rel="noreferrer" style={{ color: "var(--color-primary)" }}>тікелей өтіңіз</a>
+        {fallbackText}{" "}
+        <a href={postUrl} target="_blank" rel="noreferrer" style={{ color: "var(--color-primary)" }}>
+          {directLinkText}
+        </a>
       </div>
     </div>
   );
 }
 
 function AudioPlayer({ src, title }: { src: string; title: string }) {
+  const { locale, m } = useLanguage();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [error, setError] = useState(false);
+  const audioCopy = {
+    kk: {
+      failed: "⚠️ Аудио жүктелмеді.",
+      openDirect: "Тікелей ашу →",
+      pauseLabel: "Тоқтату",
+      playLabel: "Ойнату",
+    },
+    ru: {
+      failed: "⚠️ Аудио не загрузилось.",
+      openDirect: "Открыть напрямую →",
+      pauseLabel: "Пауза",
+      playLabel: "Воспроизвести",
+    },
+    en: {
+      failed: "⚠️ Audio failed to load.",
+      openDirect: "Open directly →",
+      pauseLabel: "Pause",
+      playLabel: "Play",
+    },
+  }[locale];
 
   function togglePlay() {
     const audio = audioRef.current;
@@ -220,14 +255,14 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
           gap: 10,
         }}
       >
-        ⚠️ Аудио жүктелмеді.
+        {audioCopy.failed}
         <a
           href={src}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "var(--color-primary)", textDecoration: "underline" }}
         >
-          Тікелей ашу →
+          {audioCopy.openDirect}
         </a>
       </div>
     );
@@ -256,7 +291,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
         <button
           type="button"
-          aria-label={playing ? `Тоқтату: ${title}` : `Ойнату: ${title}`}
+          aria-label={playing ? `${audioCopy.pauseLabel}: ${title}` : `${audioCopy.playLabel}: ${title}`}
           onClick={togglePlay}
           style={{
             width: 52,
@@ -351,7 +386,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
             background: "var(--color-surface-2)",
           }}
         >
-          <Download size={13} /> Жүктеу
+          <Download size={13} /> {m.common.download}
         </a>
       </div>
     </div>
@@ -359,11 +394,44 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 }
 
 export default function PodcastDetailPage() {
+  const { locale } = useLanguage();
   const params = useParams<{ slug: string }>();
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const [post, setPost] = useState<PodcastPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [coverAspectRatio, setCoverAspectRatio] = useState<number | null>(null);
+  const detailCopy = {
+    kk: {
+      back: "← Подкасттарға оралу",
+      loading: "Жүктелуде...",
+      notFound: "Подкаст табылмады.",
+      seasonEpisode: (season: PodcastPost["season"], episode: PodcastPost["episode"]) =>
+        `Сезон ${season} · Эпизод ${episode}`,
+      aboutEpisode: "Эпизод туралы",
+      instagramFallback: "Instagram ашылмаса,",
+      instagramDirect: "тікелей өтіңіз",
+    },
+    ru: {
+      back: "← Назад к подкастам",
+      loading: "Загрузка...",
+      notFound: "Подкаст не найден.",
+      seasonEpisode: (season: PodcastPost["season"], episode: PodcastPost["episode"]) =>
+        `Сезон ${season} · Эпизод ${episode}`,
+      aboutEpisode: "Об эпизоде",
+      instagramFallback: "Если Instagram не открылся,",
+      instagramDirect: "перейдите напрямую",
+    },
+    en: {
+      back: "← Back to podcasts",
+      loading: "Loading...",
+      notFound: "Podcast not found.",
+      seasonEpisode: (season: PodcastPost["season"], episode: PodcastPost["episode"]) =>
+        `Season ${season} · Episode ${episode}`,
+      aboutEpisode: "About the episode",
+      instagramFallback: "If Instagram does not open,",
+      instagramDirect: "open it directly",
+    },
+  }[locale];
   const youtubeVideoId = post?.audio_url ? extractYouTubeVideoId(post.audio_url) : null;
   const instagramEmbedPath = post?.audio_url ? extractInstagramEmbedPath(post.audio_url) : null;
   const hasInstagramSource = Boolean(instagramEmbedPath);
@@ -431,15 +499,15 @@ export default function PodcastDetailPage() {
             marginBottom: 32,
           }}
         >
-          ← Подкасттарға оралу
+          {detailCopy.back}
         </Link>
 
         {loading ? (
-          <p style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Жүктелуде...</p>
+          <p style={{ color: "var(--color-text-muted)", fontSize: 14 }}>{detailCopy.loading}</p>
         ) : null}
 
         {!loading && !post ? (
-          <p style={{ color: "var(--color-text-muted)", fontSize: 14 }}>Подкаст табылмады.</p>
+          <p style={{ color: "var(--color-text-muted)", fontSize: 14 }}>{detailCopy.notFound}</p>
         ) : null}
 
         {post?.cover_url ? (
@@ -487,7 +555,7 @@ export default function PodcastDetailPage() {
                     color: "var(--color-primary)",
                   }}
                 >
-                  Сезон {post.season} · Эпизод {post.episode}
+                  {detailCopy.seasonEpisode(post.season, post.episode)}
                 </span>
               ) : null}
               {post.duration ? (
@@ -567,7 +635,12 @@ export default function PodcastDetailPage() {
               youtubeVideoId ? (
                 <YouTubePlayer videoId={youtubeVideoId} title={post.title} />
               ) : instagramEmbedPath ? (
-                <InstagramPlayer embedPath={instagramEmbedPath} title={post.title} />
+                <InstagramPlayer
+                  embedPath={instagramEmbedPath}
+                  title={post.title}
+                  fallbackText={detailCopy.instagramFallback}
+                  directLinkText={detailCopy.instagramDirect}
+                />
               ) : (
                 <AudioPlayer src={post.audio_url} title={post.title} />
               )
@@ -589,7 +662,7 @@ export default function PodcastDetailPage() {
                     color: "var(--color-text)",
                   }}
                 >
-                  Эпизод туралы
+                  {detailCopy.aboutEpisode}
                 </h2>
                 <div
                   style={{

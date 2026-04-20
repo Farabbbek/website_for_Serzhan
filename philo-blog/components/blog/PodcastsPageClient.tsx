@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Play, X } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageProvider";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { getPodcastPlatform, type PodcastMeta } from "@/lib/utils/getPodcastPlatform";
 
@@ -38,17 +39,18 @@ function formatDate(value: string): string {
   return `${day}.${month}.${year}`;
 }
 
-function resolveDescription(post: PodcastCardItem): string {
+function resolveDescription(post: PodcastCardItem, fallback: string): string {
   const text = (post.excerpt ?? "").replace(/\s+/g, " ").trim();
   if (text) return text;
-  return "Эпизодты ашып толық сипаттамасын оқыңыз.";
+  return fallback;
 }
 
-function resolveAuthor(post: PodcastCardItem): string {
-  return post.author_name?.trim() || post.guests?.trim() || "Редакция";
+function resolveAuthor(post: PodcastCardItem, fallback: string): string {
+  return post.author_name?.trim() || post.guests?.trim() || fallback;
 }
 
 function PodcastModal({ state, onClose }: { state: ModalState; onClose: () => void }) {
+  const { m } = useLanguage();
   if (!state) return null;
 
   const { post, meta } = state;
@@ -70,7 +72,7 @@ function PodcastModal({ state, onClose }: { state: ModalState; onClose: () => vo
           type="button"
           className="podcast-modal-close"
           onClick={onClose}
-          aria-label="Жабу"
+          aria-label={m.podcasts.close}
         >
           <X size={18} />
         </button>
@@ -104,26 +106,26 @@ function PodcastModal({ state, onClose }: { state: ModalState; onClose: () => vo
 
         {meta.platform === "instagram" ? (
           <div className="podcast-modal-message">
-            Instagram видеоны қарау үшін →{" "}
+            {m.podcasts.instagramOpen}{" "}
             {post.audio_url ? (
               <a href={post.audio_url} target="_blank" rel="noopener noreferrer">
-                түпнұсқа сілтеме
+                {m.podcasts.originalLink}
               </a>
             ) : (
-              <span>сілтеме табылмады</span>
+              <span>{m.podcasts.notFound}</span>
             )}
           </div>
         ) : null}
 
         {meta.platform === "other" ? (
           <div className="podcast-modal-message">
-            Контентті ашу үшін →{" "}
+            {m.podcasts.externalOpen}{" "}
             {post.audio_url ? (
               <a href={post.audio_url} target="_blank" rel="noopener noreferrer">
-                сыртқы сілтеме
+                {m.podcasts.externalLink}
               </a>
             ) : (
-              <span>сілтеме табылмады</span>
+              <span>{m.podcasts.notFound}</span>
             )}
           </div>
         ) : null}
@@ -133,6 +135,7 @@ function PodcastModal({ state, onClose }: { state: ModalState; onClose: () => vo
 }
 
 export default function PodcastsPageClient({ posts }: { posts: PodcastCardItem[] }) {
+  const { m } = useLanguage();
   const [activeModal, setActiveModal] = useState<ModalState>(null);
 
   useEffect(() => {
@@ -158,7 +161,7 @@ export default function PodcastsPageClient({ posts }: { posts: PodcastCardItem[]
 
   return (
     <>
-      <section className="podcasts-page-grid" aria-label="Подкасттар тізімі">
+      <section className="podcasts-page-grid" aria-label={m.podcasts.listAria}>
         {cards.map(({ post, meta }) => {
           const thumb = meta.thumbnailUrl ?? post.cover_url ?? null;
           const publishedDate = formatDate(post.published_at || post.created_at);
@@ -169,7 +172,7 @@ export default function PodcastsPageClient({ posts }: { posts: PodcastCardItem[]
                 <Link
                   href={`/podcasts/${post.slug}`}
                   className="podcast-thumb-link"
-                  aria-label={`${post.title} бетіне өту`}
+                  aria-label={`${post.title} — ${m.podcasts.openPage}`}
                 >
                   {thumb ? (
                     <img
@@ -189,22 +192,22 @@ export default function PodcastsPageClient({ posts }: { posts: PodcastCardItem[]
                   type="button"
                   className="podcast-card-play-btn"
                   onClick={() => setActiveModal({ post, meta })}
-                  aria-label="Ойнату"
+                  aria-label={m.podcasts.play}
                 >
                   <Play />
                 </button>
 
                 <PlatformBadge platform={meta.platform} />
-                <span className="podcast-category-badge">ПОДКАСТ</span>
+                <span className="podcast-category-badge">{m.podcasts.podcastBadge}</span>
               </div>
 
               <div className="podcast-card-body">
                 <Link href={`/podcasts/${post.slug}`} className="podcast-card-title-link">
                   <h3 className="podcast-card-title">{post.title}</h3>
                 </Link>
-                <p className="podcast-card-desc">{resolveDescription(post)}</p>
+                <p className="podcast-card-desc">{resolveDescription(post, m.podcasts.noDescription)}</p>
                 <div className="podcast-card-meta">
-                  <span>{resolveAuthor(post)}</span>
+                  <span>{resolveAuthor(post, m.common.editorial)}</span>
                   <span>{publishedDate}</span>
                 </div>
               </div>

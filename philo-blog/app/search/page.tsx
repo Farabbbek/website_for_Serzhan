@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { PostCard } from "@/components/blog/PostCard";
+import { getServerMessages } from "@/lib/i18n/server";
 import { mockCategories, searchMockPosts } from "@/lib/queries/mockPosts";
 
 type SearchPageProps = {
@@ -17,20 +18,32 @@ function normalizeQuery(query?: string) {
 export async function generateMetadata({
   searchParams,
 }: SearchPageProps): Promise<Metadata> {
+  const { locale, m } = await getServerMessages();
   const { q } = await searchParams;
   const query = normalizeQuery(q);
+  const description = {
+    kk: query
+      ? `ZERDE ішінен "${query}" сұрауы бойынша іздеу нәтижелері.`
+      : "ZERDE материалдары бойынша іздеу беті.",
+    ru: query
+      ? `Результаты поиска по запросу "${query}" внутри ZERDE.`
+      : "Страница поиска по материалам ZERDE.",
+    en: query
+      ? `Search results for "${query}" across ZERDE.`
+      : "Search page for ZERDE materials.",
+  }[locale];
 
   return {
     title: query
-      ? `Іздеу: ${query} | ZERDE Blog`
-      : "Іздеу | ZERDE Blog",
-    description: query
-      ? `Philo Blog ішінен "${query}" сұрауы бойынша мақалалар іздеу нәтижелері.`
-      : "Philo Blog мақалалары бойынша іздеу беті.",
+      ? `${m.search.pageTitle}: ${query} | ZERDE Blog`
+      : `${m.search.pageTitle} | ZERDE Blog`,
+    description,
   };
 }
 
-function EmptyState() {
+async function EmptyState() {
+  const { m } = await getServerMessages();
+
   return (
     <div className="flex flex-col items-center justify-center gap-[var(--space-5)] py-[var(--space-20)] text-center">
       <svg
@@ -65,11 +78,10 @@ function EmptyState() {
 
       <div className="flex flex-col gap-3">
         <h2 className="font-display text-[length:var(--text-xl)] text-[color:var(--color-text)]">
-          Нәтиже табылмады
+          {m.search.noResults}
         </h2>
         <p className="max-w-[38rem] font-body text-[length:var(--text-base)] text-[color:var(--color-text-muted)]">
-          Басқа кілтсөзбен іздеп көріңіз немесе санаттар бойынша материалдарды
-          шолыңыз.
+          {m.search.tryAnother}
         </p>
       </div>
 
@@ -89,10 +101,11 @@ function EmptyState() {
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const { m } = await getServerMessages();
   const { q } = await searchParams;
   const query = normalizeQuery(q);
   const results = searchMockPosts(query);
-  const resultLabel = query || "барлығы";
+  const resultLabel = query || m.search.all;
 
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
@@ -100,7 +113,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <form action="/search" className="w-full">
           <div className="flex w-full items-center gap-3 border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-4">
             <label htmlFor="site-search" className="sr-only">
-              Мақалаларды іздеу
+              {m.search.searchLabel}
             </label>
             <Search
               size={18}
@@ -112,7 +125,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               type="search"
               name="q"
               defaultValue={query}
-              placeholder="Философия, этика, цифровизация..."
+              placeholder={m.search.placeholder}
               className="min-w-0 flex-1 border-0 bg-transparent font-ui text-[length:var(--text-base)] text-[color:var(--color-text)] outline-none placeholder:text-[color:var(--color-text-faint)]"
             />
             {query ? (
@@ -121,7 +134,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 className="inline-flex min-h-11 items-center gap-2 font-ui text-[length:var(--text-xs)] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)] no-underline transition-colors duration-200 hover:text-[color:var(--color-primary)]"
               >
                 <X size={14} />
-                Тазарту
+                {m.search.clear}
               </Link>
             ) : null}
           </div>
@@ -129,7 +142,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
         <div className="flex items-center gap-[var(--space-4)]">
           <h1 className="font-ui text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-muted)]">
-            Іздеу нәтижелері: “{resultLabel}” ({results.length})
+            {m.search.resultsFor}: “{resultLabel}” ({results.length})
           </h1>
           <div className="h-px flex-1 bg-[color:var(--color-divider)]" />
         </div>
@@ -141,7 +154,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             ))}
           </div>
         ) : (
-          <EmptyState />
+          <>{await EmptyState()}</>
         )}
       </div>
     </section>

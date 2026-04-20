@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageProvider";
 import type { Post } from "@/types/blog";
-
-const ALL_CATEGORIES = "Барлығы";
 
 function formatDate(dateValue: string): string {
   const parsed = new Date(dateValue);
@@ -20,23 +19,23 @@ function formatDate(dateValue: string): string {
   return `${day}.${month}.${year}`;
 }
 
-function resolveAuthor(post: Post): string {
+function resolveAuthor(post: Post, fallback: string): string {
   return (
     post.author_name?.trim() ||
     post.profiles?.full_name?.trim() ||
     post.profiles?.username?.trim() ||
-    "Редакция"
+    fallback
   );
 }
 
-function resolveExcerpt(post: Post, maxLength = 220): string {
+function resolveExcerpt(post: Post, fallback: string, maxLength = 220): string {
   const source = (post.excerpt || post.content || "")
     .replace(/\s+/g, " ")
     .replace(/(Оқиға күні|Тіл|Автор|Жылы|Пән|Түрі|РесурстарJSON):\s*[^.\n]+/gi, "")
     .trim();
 
   if (!source) {
-    return "Толық мәтінді ашып оқыңыз.";
+    return fallback;
   }
 
   if (source.length <= maxLength) {
@@ -69,8 +68,10 @@ export default function ArticlesPageClient({
   compactCards = false,
   stretchSparseGrid = true,
 }: ArticlesPageClientProps) {
+  const { m } = useLanguage();
   const featuredPost = posts[0] ?? null;
   const remainingPosts = useMemo(() => posts.slice(1), [posts]);
+  const allCategoriesLabel = m.articles.allCategories;
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
@@ -81,18 +82,22 @@ export default function ArticlesPageClient({
       ),
     );
 
-    return [ALL_CATEGORIES, ...uniqueCategories];
-  }, [remainingPosts]);
+    return [allCategoriesLabel, ...uniqueCategories];
+  }, [allCategoriesLabel, remainingPosts]);
 
-  const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
+  const [activeCategory, setActiveCategory] = useState<string>(allCategoriesLabel);
+
+  useEffect(() => {
+    setActiveCategory(allCategoriesLabel);
+  }, [allCategoriesLabel]);
 
   const filteredPosts = useMemo(() => {
-    if (activeCategory === ALL_CATEGORIES) {
+    if (activeCategory === allCategoriesLabel) {
       return remainingPosts;
     }
 
     return remainingPosts.filter((post) => (post.categories?.name || "") === activeCategory);
-  }, [activeCategory, remainingPosts]);
+  }, [activeCategory, allCategoriesLabel, remainingPosts]);
 
   return (
     <>
@@ -106,7 +111,7 @@ export default function ArticlesPageClient({
           <Link
             href={`/posts/${featuredPost.slug}`}
             className="featured-article-image"
-            aria-label={`${featuredPost.title} мақаласын ашу`}
+            aria-label={`${featuredPost.title} — ${m.articles.featuredOpen}`}
             prefetch
           >
             {featuredPost.cover_url ? (
@@ -121,13 +126,13 @@ export default function ArticlesPageClient({
           <div className="featured-article-body">
             <span className="featured-article-tag">{resolveCategory(featuredPost)}</span>
             <h2 className="featured-article-title">{featuredPost.title}</h2>
-            <p className="featured-article-excerpt">{resolveExcerpt(featuredPost, 260)}</p>
+            <p className="featured-article-excerpt">{resolveExcerpt(featuredPost, m.articles.noExcerpt, 260)}</p>
             <div className="featured-article-meta">
-              <span>{resolveAuthor(featuredPost)}</span>
+              <span>{resolveAuthor(featuredPost, m.common.editorial)}</span>
               <span>{formatDate(featuredPost.published_at)}</span>
             </div>
             <Link href={`/posts/${featuredPost.slug}`} className="featured-article-link" prefetch>
-              Оқу →
+              {m.common.readMore}
             </Link>
           </div>
         </article>
@@ -135,11 +140,11 @@ export default function ArticlesPageClient({
 
       <div className="section-header">
         <h2 className="section-title">{sectionTitle}</h2>
-        <span className="section-count">{posts.length} мақала</span>
+        <span className="section-count">{posts.length} {m.articles.sectionCount}</span>
       </div>
 
       {showFilters && categories.length > 1 ? (
-        <div className="article-filters" aria-label="Санат сүзгілері">
+        <div className="article-filters" aria-label={m.common.categoriesFilter}>
           {categories.map((category) => {
             const isActive = activeCategory === category;
 
@@ -161,13 +166,13 @@ export default function ArticlesPageClient({
       {posts.length === 0 ? (
         <div className="empty-state">
           <span className="empty-state-icon" aria-hidden="true">✍️</span>
-          <h3>Мақалалар жоқ</h3>
-          <p>Жақын арада мақалалар қосылады</p>
+          <h3>{m.articles.noArticles}</h3>
+          <p>{m.articles.noArticlesSoon}</p>
         </div>
       ) : filteredPosts.length === 0 ? (
         <div className="empty-state empty-state-sm">
-          <h3>Бұл санатта мақалалар жоқ</h3>
-          <p>Басқа санатты таңдап көріңіз</p>
+          <h3>{m.articles.noArticlesInCategory}</h3>
+          <p>{m.articles.chooseAnother}</p>
         </div>
       ) : (
         <div
@@ -182,7 +187,7 @@ export default function ArticlesPageClient({
                 <Link
                   href={`/posts/${post.slug}`}
                   className="article-card-thumb"
-                  aria-label={`${post.title} мақаласын ашу`}
+                  aria-label={`${post.title} — ${m.articles.featuredOpen}`}
                   prefetch
                 >
                   {post.cover_url ? (
@@ -207,9 +212,9 @@ export default function ArticlesPageClient({
                       {post.title}
                     </Link>
                   </h3>
-                  <p className="article-card-excerpt">{resolveExcerpt(post, 170)}</p>
+                  <p className="article-card-excerpt">{resolveExcerpt(post, m.articles.noExcerpt, 170)}</p>
                   <div className="article-card-meta">
-                    <span className="article-card-author">{resolveAuthor(post)}</span>
+                    <span className="article-card-author">{resolveAuthor(post, m.common.editorial)}</span>
                     <span className="article-card-date">{formatDate(post.published_at)}</span>
                   </div>
                 </div>

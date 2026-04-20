@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, ExternalLink } from "lucide-react";
+import { getServerMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
@@ -17,14 +18,11 @@ type MaterialResource = {
   url: string;
 };
 
-const levelLabels: Record<string, string> = {
-  all: "Барлығы",
-  bachelor: "Бакалавр",
-  master: "Магистр",
-  phd: "PhD",
-};
-
-function parseMaterialResources(content: string, fallbackUrl: string | null): MaterialResource[] {
+function parseMaterialResources(
+  content: string,
+  fallbackUrl: string | null,
+  fallbackLabel: string,
+): MaterialResource[] {
   const resourcesLine = content
     .split("\n")
     .find((line) => line.trim().startsWith("РесурстарJSON: "));
@@ -47,7 +45,7 @@ function parseMaterialResources(content: string, fallbackUrl: string | null): Ma
             if (!url) return null;
 
             return {
-              label: label || "Материал",
+              label: label || fallbackLabel,
               url,
             };
           })
@@ -64,7 +62,7 @@ function parseMaterialResources(content: string, fallbackUrl: string | null): Ma
 
   return [
     {
-      label: "Материал",
+      label: fallbackLabel,
       url: fallbackUrl,
     },
   ];
@@ -89,7 +87,31 @@ function parseMaterialBody(content: string): string {
 
 export default async function MaterialDetailPage({ params }: Props) {
   const { slug } = await params;
+  const { locale, m } = await getServerMessages();
   const supabase = await createClient();
+  const detailCopy = {
+    kk: {
+      back: "← Материалдар",
+      fallbackLabel: "Материал",
+      fallbackItem: "Материал",
+    },
+    ru: {
+      back: "← Материалы",
+      fallbackLabel: "Материал",
+      fallbackItem: "Материал",
+    },
+    en: {
+      back: "← Materials",
+      fallbackLabel: "Material",
+      fallbackItem: "Material",
+    },
+  }[locale];
+  const levelLabels: Record<string, string> = {
+    all: m.materials.all,
+    bachelor: m.materials.bachelor,
+    master: m.materials.master,
+    phd: m.materials.phd,
+  };
 
   if (!supabase) {
     notFound();
@@ -112,19 +134,19 @@ export default async function MaterialDetailPage({ params }: Props) {
     ?.split("\n")
     .find((line) => line.startsWith("Пән: "))
     ?.replace("Пән: ", "");
-  const resources = parseMaterialResources(post.content ?? "", post.file_url);
+  const resources = parseMaterialResources(post.content ?? "", post.file_url, detailCopy.fallbackLabel);
   const bodyContent = parseMaterialBody(post.content ?? "");
 
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
       <article className="mx-auto max-w-[760px]">
         <Link href="/materials" className="text-[13px] text-[color:var(--color-text-muted)] no-underline">
-          ← Материалдар
+          {detailCopy.back}
         </Link>
         <div className="mt-8 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full bg-[#05966915] px-3 py-1.5 text-[12px] font-semibold text-[#059669]">
             <BookOpen size={14} />
-            {levelLabels[post.level ?? "all"] ?? "Барлығы"}
+            {levelLabels[post.level ?? "all"] ?? m.materials.all}
           </span>
           {subject ? (
             <span className="rounded-full bg-[color:var(--color-surface-offset)] px-3 py-1.5 text-[12px] font-semibold text-[color:var(--color-text-muted)]">
@@ -157,7 +179,7 @@ export default async function MaterialDetailPage({ params }: Props) {
                 download
                 className="inline-flex items-center gap-2 rounded-[8px] bg-[#059669] px-4 py-3 text-[13px] font-semibold text-white no-underline"
               >
-                {resource.label || `Материал ${index + 1}`} <ExternalLink size={14} />
+                {resource.label || `${detailCopy.fallbackItem} ${index + 1}`} <ExternalLink size={14} />
               </a>
             ))}
           </div>

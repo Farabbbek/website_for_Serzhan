@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import UnauthorizedToast from "@/components/ui/UnauthorizedToast";
+import { getServerMessages } from "@/lib/i18n/server";
 import { getPosts } from "@/lib/queries/posts";
 import type { Post } from "@/types/blog";
 
@@ -16,10 +17,19 @@ type ContentTypeBadge = {
   color: string;
 };
 
-export const metadata: Metadata = {
-  title: "ZERDE Blog",
-  description: "Соңғы қосылған жарияланымдар.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale } = await getServerMessages();
+  const descriptions = {
+    kk: "Соңғы қосылған жарияланымдар.",
+    ru: "Последние опубликованные материалы.",
+    en: "Latest published materials.",
+  } as const;
+
+  return {
+    title: "ZERDE Blog",
+    description: descriptions[locale],
+  };
+}
 
 function formatPublishedDate(dateString: string): string {
   const date = new Date(dateString);
@@ -47,39 +57,42 @@ function resolvePostHref(post: Post): string {
   return `/posts/${post.slug}`;
 }
 
-function resolveCategoryLabel(post: Post): string {
+function resolveCategoryLabel(post: Post, labels: { podcasts: string; news: string; materials: string; articles: string }): string {
   if (post.categories?.name) return post.categories.name;
 
   const normalizedType = (post.type ?? "").toLowerCase();
-  if (normalizedType === "podcast") return "ПОДКАСТТАР";
-  if (normalizedType === "news") return "ЖАҢАЛЫҚТАР";
+  if (normalizedType === "podcast") return labels.podcasts;
+  if (normalizedType === "news") return labels.news;
   if (normalizedType === "material" || normalizedType === "materials") {
-    return "МАТЕРИАЛДАР";
+    return labels.materials;
   }
 
-  return "МАҚАЛАЛАР";
+  return labels.articles;
 }
 
-function getContentTypeBadge(type: string | null | undefined): ContentTypeBadge | null {
+function getContentTypeBadge(
+  type: string | null | undefined,
+  labels: { podcast: string; news: string; material: string },
+): ContentTypeBadge | null {
   const normalized = (type ?? "").toLowerCase();
 
   switch (normalized) {
     case "podcast":
       return {
-        label: "ПОДКАСТ",
+        label: labels.podcast,
         background: "var(--color-primary)",
         color: "white",
       };
     case "news":
       return {
-        label: "ЖАҢАЛЫҚ",
+        label: labels.news,
         background: "var(--color-surface-offset)",
         color: "var(--color-text-muted)",
       };
     case "material":
     case "materials":
       return {
-        label: "МАТЕРИАЛ",
+        label: labels.material,
         background: "var(--color-text)",
         color: "var(--color-bg)",
       };
@@ -88,23 +101,23 @@ function getContentTypeBadge(type: string | null | undefined): ContentTypeBadge 
   }
 }
 
-function resolveAuthor(post: Post): string {
+function resolveAuthor(post: Post, fallback: string): string {
   return (
     post.author_name?.trim() ||
     post.profiles?.full_name?.trim() ||
     post.profiles?.username?.trim() ||
-    "Редакция"
+    fallback
   );
 }
 
-function resolveExcerpt(post: Post, maxLength = 180): string {
+function resolveExcerpt(post: Post, fallback: string, maxLength = 180): string {
   const source = (post.excerpt || post.content || "")
     .replace(/\s+/g, " ")
     .replace(/(Оқиға күні|Тіл|Автор|Жылы|Пән|Түрі|РесурстарJSON):\s*[^.\n]+/gi, "")
     .trim();
 
   if (!source) {
-    return "Толық мәтінді ашып оқыңыз.";
+    return fallback;
   }
 
   if (source.length <= maxLength) {
@@ -137,6 +150,7 @@ function uniquePostsById(posts: Post[]): Post[] {
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const { error } = await searchParams;
+  const { m } = await getServerMessages();
   const showUnauthorizedToast = error === "unauthorized";
   const [allPosts, podcasts, materials, legacyMaterials] = await Promise.all([
     getPosts({ limit: 24 }),
@@ -161,7 +175,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <section className="home-content">
       {showUnauthorizedToast ? (
-        <UnauthorizedToast message="Бұл бетке кіруге рұқсатыңыз жоқ" />
+        <UnauthorizedToast message={m.home.unauthorized} />
       ) : null}
 
       {featuredPost ? (
@@ -179,16 +193,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </Link>
 
           <div className="hero-card-body">
-            <span className="hero-card-category">{resolveCategoryLabel(featuredPost)}</span>
+            <span className="hero-card-category">
+              {resolveCategoryLabel(featuredPost, {
+                podcasts: m.nav.podcasts,
+                news: m.nav.news,
+                materials: m.nav.materials,
+                articles: m.nav.articles,
+              })}
+            </span>
             <Link href={resolvePostHref(featuredPost)} className="hero-card-title-link" prefetch>
               <h1 className="hero-card-title">{featuredPost.title}</h1>
             </Link>
-            <p className="hero-card-excerpt">{resolveExcerpt(featuredPost, 240)}</p>
+            <p className="hero-card-excerpt">{resolveExcerpt(featuredPost, m.articles.noExcerpt, 240)}</p>
             <div className="hero-card-meta">
-              {resolveAuthor(featuredPost)} · {formatPublishedDate(featuredPost.published_at)}
+              {resolveAuthor(featuredPost, m.common.editorial)} · {formatPublishedDate(featuredPost.published_at)}
             </div>
             <Link href={resolvePostHref(featuredPost)} className="hero-card-read-more" prefetch>
-              Оқу →
+              {m.common.readMore}
             </Link>
           </div>
         </article>
@@ -196,16 +217,20 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <section>
         <div className="section-header">
-          <h2 className="section-title">СОҢҒЫ ҚОСЫЛҒАНДАР</h2>
+          <h2 className="section-title">{m.home.latest}</h2>
         </div>
 
         {recentPosts.length === 0 ? (
-          <p className="home-empty">Жарияланымдар әзірге табылмады.</p>
+          <p className="home-empty">{m.home.noPosts}</p>
         ) : (
           <>
             <div className="posts-grid">
               {recentPosts.map((post) => {
-                const contentTypeBadge = getContentTypeBadge(post.type);
+                const contentTypeBadge = getContentTypeBadge(post.type, {
+                  podcast: m.common.podcastBadge,
+                  news: m.common.newsBadge,
+                  material: m.common.materialBadge,
+                });
 
                 return (
                   <article key={post.id} className="post-card">
@@ -235,12 +260,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                         ) : null}
                       </div>
 
-                      <span className="post-card-category">{resolveCategoryLabel(post)}</span>
+                      <span className="post-card-category">
+                        {resolveCategoryLabel(post, {
+                          podcasts: m.nav.podcasts,
+                          news: m.nav.news,
+                          materials: m.nav.materials,
+                          articles: m.nav.articles,
+                        })}
+                      </span>
                       <h3 className="post-card-title">{post.title}</h3>
-                      <p className="post-card-excerpt">{resolveExcerpt(post)}</p>
+                      <p className="post-card-excerpt">{resolveExcerpt(post, m.articles.noExcerpt)}</p>
 
                       <div className="post-card-meta">
-                        <span>{resolveAuthor(post)}</span>
+                        <span>{resolveAuthor(post, m.common.editorial)}</span>
                         <span>{formatPublishedDate(post.published_at)}</span>
                       </div>
                     </Link>
@@ -251,7 +283,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
             <div className="section-footer-link-wrap">
               <Link href="/category/maqalalar" className="section-link" prefetch>
-                Барлығын көру →
+                {m.common.viewAll}
               </Link>
             </div>
           </>
@@ -260,14 +292,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <section>
         <div className="section-header">
-          <h2 className="section-title">ПОДКАСТТАР</h2>
+          <h2 className="section-title">{m.nav.podcasts}</h2>
           <Link href="/podcasts" className="section-link" prefetch>
-            Барлық подкасттар →
+            {m.common.allPodcasts}
           </Link>
         </div>
 
         {podcastPosts.length === 0 ? (
-          <p className="home-empty">Подкасттар әзірге табылмады.</p>
+          <p className="home-empty">{m.home.noPodcasts}</p>
         ) : (
           <div>
             {podcastPosts.map((post, index) => (
@@ -288,7 +320,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <div>
                   <h3 className="podcast-title">{post.title}</h3>
                   <div className="podcast-meta">
-                    {resolveAuthor(post)} · {formatPublishedDate(post.published_at)}
+                    {resolveAuthor(post, m.common.editorial)} · {formatPublishedDate(post.published_at)}
                   </div>
                 </div>
 
@@ -298,7 +330,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
             <div className="section-footer-link-wrap section-footer-link-wrap-left">
               <Link href="/podcasts" className="section-link" prefetch>
-                Барлық подкасттар →
+                {m.common.allPodcasts}
               </Link>
             </div>
           </div>
@@ -307,14 +339,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       <section>
         <div className="section-header">
-          <h2 className="section-title">МАТЕРИАЛДАР</h2>
+          <h2 className="section-title">{m.nav.materials}</h2>
           <Link href="/materials" className="section-link" prefetch>
-            Барлық материалдар →
+            {m.common.allMaterials}
           </Link>
         </div>
 
         {materialPosts.length === 0 ? (
-          <p className="home-empty">Материалдар әзірге табылмады.</p>
+          <p className="home-empty">{m.home.noMaterials}</p>
         ) : (
           <div className="materials-list">
             {materialPosts.map((post) => {
@@ -331,7 +363,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       {post.title}
                     </Link>
                     <div className="material-meta">
-                      {resolveAuthor(post)} · {formatPublishedDate(post.published_at)}
+                      {resolveAuthor(post, m.common.editorial)} · {formatPublishedDate(post.published_at)}
                     </div>
                   </div>
 
@@ -342,11 +374,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Жүктеу
+                      {m.common.download}
                     </a>
                   ) : (
                     <Link href={downloadHref} className="material-download-btn" prefetch>
-                      Жүктеу
+                      {m.common.download}
                     </Link>
                   )}
                 </article>

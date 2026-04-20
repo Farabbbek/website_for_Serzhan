@@ -1,19 +1,13 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { FileTypeBadge } from "@/components/ui/FileTypeBadge";
+import { getServerMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { getMaterialType } from "@/lib/utils/getMaterialType";
 import type { Database } from "@/lib/supabase/types";
 
 type PostRow = Database["public"]["Tables"]["posts"]["Row"] & {
   categories?: { name: string; slug: string } | null;
-};
-
-const levelLabels: Record<string, string> = {
-  all: "Барлығы",
-  bachelor: "Бакалавр",
-  master: "Магистр",
-  phd: "PhD",
 };
 
 function parseContentValue(content: string, key: string): string | null {
@@ -54,7 +48,7 @@ function getPrimaryMaterialResourceUrl(content: string, fallbackUrl: string | nu
   return fallbackUrl;
 }
 
-function resolveDescription(excerpt: string | null, content: string): string {
+function resolveDescription(excerpt: string | null, content: string, fallback: string): string {
   const cleanedExcerpt = excerpt?.trim();
   if (cleanedExcerpt) return cleanedExcerpt;
 
@@ -66,13 +60,14 @@ function resolveDescription(excerpt: string | null, content: string): string {
     .trim();
 
   if (!body) {
-    return "Оқу материалының толық сипаттамасын материал бетінде көре аласыз.";
+    return fallback;
   }
 
   return body.length > 180 ? `${body.slice(0, 179).trimEnd()}…` : body;
 }
 
 export default async function MaterialsPage() {
+  const { m } = await getServerMessages();
   const supabase = await createClient();
   const { data } = supabase
     ? await supabase
@@ -89,8 +84,8 @@ export default async function MaterialsPage() {
       <section className="py-[clamp(var(--space-12),6vw,var(--space-24))] materials-library">
         <div className="empty-state">
           <span style={{ fontSize: 48 }}>📂</span>
-          <h3>Материалдар жоқ</h3>
-          <p>Жақын арада материалдар қосылады</p>
+          <h3>{m.materials.noItems}</h3>
+          <p>{m.materials.noItemsSoon}</p>
         </div>
       </section>
     );
@@ -99,20 +94,24 @@ export default async function MaterialsPage() {
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))] materials-library">
       <div className="page-header">
-        <h1 className="page-title">МАТЕРИАЛДАР</h1>
-        <p className="page-subtitle">
-          Ғылыми мақалалар, оқу құралдары және зерттеу жұмыстары
-        </p>
+        <h1 className="page-title">{m.materials.pageTitle}</h1>
+        <p className="page-subtitle">{m.materials.subtitle}</p>
       </div>
 
       <div className="materials-grid">
         {posts.map((post) => {
           const subject = parseContentValue(post.content ?? "", "Пән");
           const authorFromContent = parseContentValue(post.content ?? "", "Автор");
-          const author = authorFromContent || post.author_name || "Редакция";
+          const author = authorFromContent || post.author_name || m.common.editorial;
           const resourceUrl = getPrimaryMaterialResourceUrl(post.content ?? "", post.file_url);
           const materialMeta = getMaterialType(resourceUrl ?? "");
-          const description = resolveDescription(post.excerpt, post.content ?? "");
+          const description = resolveDescription(post.excerpt, post.content ?? "", m.materials.noDescription);
+          const localizedLevelLabels: Record<string, string> = {
+            all: m.materials.all,
+            bachelor: m.materials.bachelor,
+            master: m.materials.master,
+            phd: m.materials.phd,
+          };
 
           return (
             <article key={post.id} className="material-card">
@@ -134,12 +133,14 @@ export default async function MaterialsPage() {
                 <div className="material-thumb-overlay" />
 
                 <FileTypeBadge fileUrl={resourceUrl ?? ""} />
-                <span className="material-category-badge">МАТЕРИАЛ</span>
+                <span className="material-category-badge">{m.materials.materialBadge}</span>
               </div>
 
               <div className="material-card-body">
                 <div className="material-card-tags">
-                  <span className="material-card-tag">{levelLabels[post.level ?? "all"] ?? "Барлығы"}</span>
+                  <span className="material-card-tag">
+                    {localizedLevelLabels[post.level ?? "all"] ?? m.materials.all}
+                  </span>
                   {subject ? <span className="material-card-tag">{subject}</span> : null}
                 </div>
 
@@ -161,12 +162,12 @@ export default async function MaterialsPage() {
                       download
                     >
                       <Download />
-                      Жүктеу
+                      {m.common.download}
                     </a>
                   ) : (
                     <Link href={`/materials/${post.slug}`} className="material-download-btn" prefetch>
                       <Download />
-                      Көру
+                      {m.common.view}
                     </Link>
                   )}
                 </div>

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import LoadingScreen from "@/components/LoadingScreen";
+import { useLanguage } from "@/contexts/LanguageProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
 import {
@@ -26,7 +27,124 @@ type UserType = NonNullable<ProfileRow["user_type"]>;
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { locale } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const copy = {
+    kk: {
+      missingSupabase: "Supabase орнатылмаған. .env.local тексеріңіз.",
+      defaultUser: "Пайдаланушы",
+      profileSaved: "Профиль сәтті сақталды",
+      passwordChanged: "Құпиясөз сәтті өзгертілді",
+      avatarUploadError: "Аватар жүктеу қатесі",
+      avatarChanged: "Аватар сәтті өзгертілді",
+      weak: "Әлсіз",
+      medium: "Орташа",
+      good: "Жақсы",
+      strong: "Күшті",
+      student: "Студент",
+      teacher: "Оқытушы",
+      profileInfo: "Профиль ақпарат",
+      security: "Қауіпсіздік",
+      adminPanel: "Админ панель",
+      signOut: "Шығу",
+      avatarAlt: "Профиль аватары",
+      changeAvatar: "Аватарды өзгерту",
+      avatarHint: "JPG, PNG, WEBP · Максимум 5MB",
+      fullName: "Толық аты",
+      email: "Email",
+      emailLocked: "Email өзгертілмейді",
+      role: "Рөліңіз",
+      saving: "Сақталуда...",
+      save: "САҚТАУ",
+      setPassword: "Құпиясөз орнату",
+      changePassword: "Құпиясөзді өзгерту",
+      googleTitle: "Сіз Google арқылы кірдіңіз",
+      googleText: "Email арқылы кіру үшін құпиясөз орнатыңыз",
+      newPassword: "Жаңа құпиясөз",
+      minPassword: "Кемінде 8 таңба",
+      confirmPassword: "Құпиясөзді растаңыз",
+      repeatPassword: "Құпиясөзді қайта енгізіңіз",
+      passwordsMatch: "Құпиясөздер сәйкес",
+      passwordsMismatch: "Құпиясөздер сәйкес емес",
+      savePassword: "Құпиясөзді сақтау",
+    },
+    ru: {
+      missingSupabase: "Supabase не настроен. Проверьте .env.local.",
+      defaultUser: "Пользователь",
+      profileSaved: "Профиль успешно сохранён",
+      passwordChanged: "Пароль успешно изменён",
+      avatarUploadError: "Ошибка загрузки аватара",
+      avatarChanged: "Аватар успешно обновлён",
+      weak: "Слабый",
+      medium: "Средний",
+      good: "Хороший",
+      strong: "Сильный",
+      student: "Студент",
+      teacher: "Преподаватель",
+      profileInfo: "Информация профиля",
+      security: "Безопасность",
+      adminPanel: "Админ панель",
+      signOut: "Выйти",
+      avatarAlt: "Аватар профиля",
+      changeAvatar: "Изменить аватар",
+      avatarHint: "JPG, PNG, WEBP · Максимум 5MB",
+      fullName: "Полное имя",
+      email: "Email",
+      emailLocked: "Email нельзя изменить",
+      role: "Ваша роль",
+      saving: "Сохранение...",
+      save: "СОХРАНИТЬ",
+      setPassword: "Установить пароль",
+      changePassword: "Изменить пароль",
+      googleTitle: "Вы вошли через Google",
+      googleText: "Установите пароль, чтобы входить по Email",
+      newPassword: "Новый пароль",
+      minPassword: "Минимум 8 символов",
+      confirmPassword: "Подтвердите пароль",
+      repeatPassword: "Повторите пароль",
+      passwordsMatch: "Пароли совпадают",
+      passwordsMismatch: "Пароли не совпадают",
+      savePassword: "Сохранить пароль",
+    },
+    en: {
+      missingSupabase: "Supabase is not configured. Check .env.local.",
+      defaultUser: "User",
+      profileSaved: "Profile saved successfully",
+      passwordChanged: "Password updated successfully",
+      avatarUploadError: "Avatar upload error",
+      avatarChanged: "Avatar updated successfully",
+      weak: "Weak",
+      medium: "Medium",
+      good: "Good",
+      strong: "Strong",
+      student: "Student",
+      teacher: "Teacher",
+      profileInfo: "Profile information",
+      security: "Security",
+      adminPanel: "Admin panel",
+      signOut: "Sign out",
+      avatarAlt: "Profile avatar",
+      changeAvatar: "Change avatar",
+      avatarHint: "JPG, PNG, WEBP · Maximum 5MB",
+      fullName: "Full name",
+      email: "Email",
+      emailLocked: "Email cannot be changed",
+      role: "Your role",
+      saving: "Saving...",
+      save: "SAVE",
+      setPassword: "Set password",
+      changePassword: "Change password",
+      googleTitle: "You signed in with Google",
+      googleText: "Set a password to sign in with email as well",
+      newPassword: "New password",
+      minPassword: "At least 8 characters",
+      confirmPassword: "Confirm password",
+      repeatPassword: "Re-enter your password",
+      passwordsMatch: "Passwords match",
+      passwordsMismatch: "Passwords do not match",
+      savePassword: "Save password",
+    },
+  }[locale];
 
   const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
 
@@ -56,7 +174,7 @@ export default function ProfilePage() {
     const supabase = getSupabaseBrowserClient();
 
     if (!supabase) {
-      setErrorTextProfile("Supabase орнатылмаған. .env.local тексеріңіз.");
+      setErrorTextProfile(copy.missingSupabase);
       setLoading(false);
       return;
     }
@@ -122,7 +240,7 @@ export default function ProfilePage() {
       isMounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [copy.missingSupabase, router]);
 
   const isGoogleUser = user?.app_metadata?.provider === "google";
 
@@ -147,8 +265,8 @@ export default function ProfilePage() {
     const emailPrefix = user?.email?.split("@")[0] ?? "";
     const cleanedEmailPrefix = emailPrefix.replace(/[._-]+/g, " ").trim();
 
-    return cleanedEmailPrefix || "Пайдаланушы";
-  }, [fullName, user?.email]);
+    return cleanedEmailPrefix || copy.defaultUser;
+  }, [copy.defaultUser, fullName, user?.email]);
 
   async function handleSaveProfile() {
     const supabase = getSupabaseBrowserClient();
@@ -179,7 +297,7 @@ export default function ProfilePage() {
       return;
     }
 
-    setStatusTextProfile("Профиль сәтті сақталды");
+    setStatusTextProfile(copy.profileSaved);
 
     window.dispatchEvent(
       new CustomEvent("profile:updated", {
@@ -211,7 +329,7 @@ export default function ProfilePage() {
 
     setNewPassword("");
     setConfirmPassword("");
-    setStatusTextSecurity("Құпиясөз сәтті өзгертілді");
+    setStatusTextSecurity(copy.passwordChanged);
     setTimeout(() => setStatusTextSecurity(null), 3000);
   }
 
@@ -240,7 +358,7 @@ export default function ProfilePage() {
 
     if (uploadError) {
       setIsUploadingAvatar(false);
-      setErrorTextProfile(`Аватар жүктеу қатесі: ${uploadError.message}`);
+      setErrorTextProfile(`${copy.avatarUploadError}: ${uploadError.message}`);
       return;
     }
 
@@ -269,7 +387,7 @@ export default function ProfilePage() {
       return;
     }
 
-    setStatusTextProfile("Аватар сәтті өзгертілді");
+    setStatusTextProfile(copy.avatarChanged);
 
     window.dispatchEvent(
       new CustomEvent("profile:updated", {
@@ -303,10 +421,10 @@ export default function ProfilePage() {
 
   const strengthCount = getStrengthBars(newPassword);
   let strengthLabel = "";
-  if (strengthCount === 1) strengthLabel = "Әлсіз";
-  else if (strengthCount === 2) strengthLabel = "Орташа";
-  else if (strengthCount === 3) strengthLabel = "Жақсы";
-  else if (strengthCount === 4) strengthLabel = "Күшті";
+  if (strengthCount === 1) strengthLabel = copy.weak;
+  else if (strengthCount === 2) strengthLabel = copy.medium;
+  else if (strengthCount === 3) strengthLabel = copy.good;
+  else if (strengthCount === 4) strengthLabel = copy.strong;
 
   const strengthColor =
     strengthCount === 4
@@ -336,7 +454,7 @@ export default function ProfilePage() {
             {avatarUrl ? (
               <Image
                 src={avatarUrl || "/default-avatar.png"}
-                alt="Profile avatar"
+                alt={copy.avatarAlt}
                 width={80}
                 height={80}
                 className="w-full h-full"
@@ -354,7 +472,7 @@ export default function ProfilePage() {
           </p>
           <div className="flex justify-center mb-[20px]">
             <span className="text-[11px] px-[10px] py-[3px] rounded-full bg-[rgba(197,64,26,0.1)] text-[#C5401A] border border-[rgba(197,64,26,0.2)] text-center w-fit uppercase font-semibold">
-              {userType === "student" ? "Студент" : "Оқытушы"}
+              {userType === "student" ? copy.student : copy.teacher}
             </span>
           </div>
         </div>
@@ -385,7 +503,7 @@ export default function ProfilePage() {
               }
             }}
           >
-            <UserIcon size={16} /> Профиль ақпарат
+            <UserIcon size={16} /> {copy.profileInfo}
           </button>
 
           <button
@@ -411,7 +529,7 @@ export default function ProfilePage() {
               }
             }}
           >
-            <Lock size={16} /> Қауіпсіздік
+            <Lock size={16} /> {copy.security}
           </button>
 
           {isAdmin && (
@@ -419,7 +537,7 @@ export default function ProfilePage() {
               href="/admin"
               className="flex items-center gap-[10px] px-[12px] py-[10px] rounded-[8px] text-[14px] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-offset)] hover:text-[color:var(--color-text)] shrink-0 border-l-[3px] border-transparent transition-colors mb-[4px]"
             >
-              <Settings size={16} /> Админ панель
+              <Settings size={16} /> {copy.adminPanel}
             </Link>
           )}
         </nav>
@@ -439,7 +557,7 @@ export default function ProfilePage() {
               e.currentTarget.style.color = "var(--color-text-muted)";
             }}
           >
-            <LogOut size={16} /> Шығу
+            <LogOut size={16} /> {copy.signOut}
           </button>
         </div>
       </div>
@@ -448,7 +566,7 @@ export default function ProfilePage() {
       <div className="flex-1 min-w-0 pb-[40px]">
         {activeTab === "profile" && (
           <div className="bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[12px] py-[28px] px-[32px]">
-            <p className="font-ui text-[32px] leading-[1.06] font-semibold mb-[24px] text-[color:var(--color-text)]">Профиль ақпарат</p>
+            <p className="font-ui text-[32px] leading-[1.06] font-semibold mb-[24px] text-[color:var(--color-text)]">{copy.profileInfo}</p>
             
             {statusTextProfile && (
               <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 text-[#15803d] rounded-[8px] px-4 py-3 text-[14px] mb-[24px] flex items-center gap-2">
@@ -473,7 +591,7 @@ export default function ProfilePage() {
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl || "/default-avatar.png"}
-                    alt="Profile avatar"
+                    alt={copy.avatarAlt}
                     width={80}
                     height={80}
                     className="w-full h-full"
@@ -490,9 +608,9 @@ export default function ProfilePage() {
                   disabled={isUploadingAvatar}
                   className="flex items-center justify-center gap-[6px] py-[8px] px-[16px] border border-[color:var(--color-border)] rounded-[8px] text-[13px] bg-transparent cursor-pointer text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-offset)] transition-colors disabled:opacity-50 w-fit"
                 >
-                  <Camera size={16} /> Аватарды өзгерту
+                  <Camera size={16} /> {copy.changeAvatar}
                 </button>
-                <p className="text-[11px] text-[color:var(--color-text-muted)] mt-[6px]">JPG, PNG, WEBP · Максимум 5MB</p>
+                <p className="text-[11px] text-[color:var(--color-text-muted)] mt-[6px]">{copy.avatarHint}</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -506,7 +624,7 @@ export default function ProfilePage() {
             <div className="flex flex-col gap-[20px]">
               <div>
                 <label className="block text-[11px] font-semibold tracking-[0.06em] uppercase text-[color:var(--color-text-muted)] mb-[6px] w-full">
-                  Толық аты
+                  {copy.fullName}
                 </label>
                 <input
                   type="text"
@@ -520,7 +638,7 @@ export default function ProfilePage() {
 
               <div>
                 <label className="block text-[11px] font-semibold tracking-[0.06em] uppercase text-[color:var(--color-text-muted)] mb-[6px] w-full">
-                  Email
+                  {copy.email}
                 </label>
                 <input
                   type="email"
@@ -528,12 +646,12 @@ export default function ProfilePage() {
                   disabled
                   className="py-[10px] px-[14px] text-[14px] rounded-[8px] border border-[color:var(--color-border)] bg-[color:var(--color-surface-offset)] text-[color:var(--color-text-muted)] w-full cursor-not-allowed"
                 />
-                <p className="mt-[6px] text-[11px] text-[color:var(--color-text-muted)]">Email өзгертілмейді</p>
+                <p className="mt-[6px] text-[11px] text-[color:var(--color-text-muted)]">{copy.emailLocked}</p>
               </div>
 
               <div>
                 <label className="block text-[11px] font-semibold tracking-[0.06em] uppercase text-[color:var(--color-text-muted)] mb-[6px] w-full">
-                  Рөліңіз
+                  {copy.role}
                 </label>
                 <div className="grid grid-cols-2 gap-[10px]">
                   <button
@@ -547,7 +665,7 @@ export default function ProfilePage() {
                       fontWeight: userType === "student" ? 600 : 400,
                     }}
                   >
-                    Студент
+                    {copy.student}
                   </button>
                   <button
                     type="button"
@@ -560,7 +678,7 @@ export default function ProfilePage() {
                       fontWeight: userType === "teacher" ? 600 : 400,
                     }}
                   >
-                    Оқытушы
+                    {copy.teacher}
                   </button>
                 </div>
               </div>
@@ -571,7 +689,7 @@ export default function ProfilePage() {
                 disabled={isSavingProfile}
                 className="mt-[24px] w-full py-[12px] text-[15px] font-semibold bg-[#C5401A] text-white border-none rounded-[8px] cursor-pointer hover:bg-[#a33315] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSavingProfile ? "Сақталуда..." : "САҚТАУ"}
+                {isSavingProfile ? copy.saving : copy.save}
               </button>
             </div>
           </div>
@@ -580,7 +698,7 @@ export default function ProfilePage() {
         {activeTab === "security" && (
           <div className="bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[12px] py-[28px] px-[32px]">
             <p className="font-ui text-[32px] leading-[1.06] font-semibold mb-[24px] text-[color:var(--color-text)]">
-              {isGoogleUser ? "Құпиясөз орнату" : "Құпиясөзді өзгерту"}
+              {isGoogleUser ? copy.setPassword : copy.changePassword}
             </p>
 
             {statusTextSecurity && (
@@ -601,10 +719,10 @@ export default function ProfilePage() {
                 <AlertCircle size={16} color="#C5401A" className="shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[15px] font-medium text-[color:var(--color-text)] mb-1">
-                    Сіз Google арқылы кірдіңіз
+                    {copy.googleTitle}
                   </p>
                   <p className="text-[13px] text-[color:var(--color-text-muted)]">
-                    Email арқылы кіру үшін құпиясөз орнатыңыз
+                    {copy.googleText}
                   </p>
                 </div>
               </div>
@@ -613,14 +731,14 @@ export default function ProfilePage() {
             <div className="flex flex-col gap-[20px]">
               <div>
                 <label className="block text-[11px] font-semibold tracking-[0.06em] uppercase text-[color:var(--color-text-muted)] mb-[6px] w-full">
-                  Жаңа құпиясөз
+                  {copy.newPassword}
                 </label>
                 <div className="relative">
                   <input
                     type={showNewPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Кемінде 8 таңба"
+                    placeholder={copy.minPassword}
                     className="py-[10px] px-[14px] text-[14px] pr-10 rounded-[8px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] text-[color:var(--color-text)] w-full focus:outline-none focus:border-[#C5401A] transition-all"
                     onFocus={(e) => (e.target.style.boxShadow = "0 0 0 3px rgba(197,64,26,0.1)")}
                     onBlur={(e) => (e.target.style.boxShadow = "none")}
@@ -660,14 +778,14 @@ export default function ProfilePage() {
 
               <div>
                 <label className="block text-[11px] font-semibold tracking-[0.06em] uppercase text-[color:var(--color-text-muted)] mb-[6px] w-full">
-                  Құпиясөзді растаңыз
+                  {copy.confirmPassword}
                 </label>
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Құпиясөзді қайта енгізіңіз"
+                    placeholder={copy.repeatPassword}
                     className="py-[10px] px-[14px] text-[14px] pr-10 rounded-[8px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] text-[color:var(--color-text)] w-full focus:outline-none focus:border-[#C5401A] transition-all"
                     onFocus={(e) => (e.target.style.boxShadow = "0 0 0 3px rgba(197,64,26,0.1)")}
                     onBlur={(e) => (e.target.style.boxShadow = "none")}
@@ -688,9 +806,9 @@ export default function ProfilePage() {
                     style={{ color: newPassword === confirmPassword ? "#22c55e" : "#ef4444" }}
                   >
                     {newPassword === confirmPassword ? (
-                      <><CheckCircle2 size={14} color="#22c55e" className="shrink-0" /> Құпиясөздер сәйкес</>
+                      <><CheckCircle2 size={14} color="#22c55e" className="shrink-0" /> {copy.passwordsMatch}</>
                     ) : (
-                      <><XCircle size={14} color="#ef4444" className="shrink-0" /> Құпиясөздер сәйкес емес</>
+                      <><XCircle size={14} color="#ef4444" className="shrink-0" /> {copy.passwordsMismatch}</>
                     )}
                   </div>
                 )}
@@ -702,7 +820,7 @@ export default function ProfilePage() {
                 disabled={isPasswordSaveDisabled}
                 className="mt-[24px] w-full py-[12px] text-[15px] font-semibold bg-[#C5401A] text-white border-none rounded-[8px] cursor-pointer hover:bg-[#a33315] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSavingPassword ? "Сақталуда..." : "Құпиясөзді сақтау"}
+                {isSavingPassword ? copy.saving : copy.savePassword}
               </button>
             </div>
           </div>

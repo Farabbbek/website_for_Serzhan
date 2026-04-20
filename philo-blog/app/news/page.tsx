@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { getServerMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
@@ -17,6 +18,7 @@ function formatDate(value: string | null) {
 }
 
 export default async function NewsPage() {
+  const { m } = await getServerMessages();
   const supabase = await createClient();
   const { data } = supabase
     ? await supabase
@@ -62,7 +64,7 @@ export default async function NewsPage() {
                   rel="noreferrer"
                   className="inline-flex w-fit items-center gap-2 text-[13px] font-semibold text-[#2563eb] no-underline"
                 >
-                  Дереккөз <ExternalLink size={14} />
+                  {m.news.source} <ExternalLink size={14} />
                 </a>
               ) : null}
             </div>

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import LoadingScreen from "@/components/LoadingScreen";
 import PageCurtain from "@/components/PageCurtain";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
+import { LanguageProvider } from "@/contexts/LanguageProvider";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
+import { getServerLocale } from "@/lib/i18n/server";
 import "./globals.css";
 
 const rawUrl =
@@ -36,8 +38,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const localePromise = getServerLocale();
+
   return (
-    <html lang="kk" className="h-full antialiased" suppressHydrationWarning>
+    <RootLayoutInner localePromise={localePromise}>{children}</RootLayoutInner>
+  );
+}
+
+async function RootLayoutInner({
+  children,
+  localePromise,
+}: Readonly<{
+  children: React.ReactNode;
+  localePromise: Promise<"kk" | "ru" | "en">;
+}>) {
+  const locale = await localePromise;
+  const skipLabel = {
+    kk: "Негізгі мазмұнға өту",
+    ru: "Перейти к основному содержанию",
+    en: "Skip to main content",
+  }[locale];
+
+  return (
+    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -49,15 +72,17 @@ export default function RootLayout({
       </head>
       <body className="font-body min-h-full flex flex-col">
         <ThemeProvider>
-          <LoadingScreen />
-          <PageCurtain />
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[80] focus:rounded-full focus:bg-[color:var(--color-surface)] focus:px-4 focus:py-3 focus:font-ui focus:text-[length:var(--text-sm)] focus:font-semibold focus:text-[color:var(--color-text)] focus:no-underline"
-          >
-            Skip to content
-          </a>
-          <RootLayoutClient>{children}</RootLayoutClient>
+          <LanguageProvider initialLocale={locale}>
+            <LoadingScreen />
+            <PageCurtain />
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[80] focus:rounded-full focus:bg-[color:var(--color-surface)] focus:px-4 focus:py-3 focus:font-ui focus:text-[length:var(--text-sm)] focus:font-semibold focus:text-[color:var(--color-text)] focus:no-underline"
+            >
+              {skipLabel}
+            </a>
+            <RootLayoutClient>{children}</RootLayoutClient>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

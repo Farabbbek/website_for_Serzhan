@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Copy, CopyCheck, Link2, X } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageProvider";
 import type { TocItem } from "@/types/blog";
 
 const prefersReducedMotion =
@@ -21,6 +22,21 @@ export function ArticlePageShell({
   toc,
   children,
 }: ArticlePageShellProps) {
+  const { locale, m } = useLanguage();
+  const ariaLabels = {
+    kk: {
+      mobileToc: "Мобильді мазмұн навигациясы",
+      toc: "Мазмұн навигациясы",
+    },
+    ru: {
+      mobileToc: "Мобильная навигация по содержанию",
+      toc: "Навигация по содержанию",
+    },
+    en: {
+      mobileToc: "Mobile table of contents",
+      toc: "Table of contents",
+    },
+  }[locale];
   const [progress, setProgress] = useState(0);
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
@@ -98,10 +114,10 @@ export function ArticlePageShell({
           {toc.length ? (
             <details className="mb-[var(--space-6)] border border-[color:var(--color-divider)] bg-[color:var(--color-surface)] lg:hidden">
               <summary className="flex min-h-11 cursor-pointer items-center px-4 font-ui text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-                Мазмұны
+                {m.articleShell.mobileToc}
               </summary>
               <nav
-                aria-label="Mobile table of contents"
+                aria-label={ariaLabels.mobileToc}
                 className="border-t border-[color:var(--color-divider)] px-4 py-4"
               >
                 <ul className="flex flex-col gap-3">
@@ -130,9 +146,9 @@ export function ArticlePageShell({
           <div className="sticky top-24 flex flex-col gap-[var(--space-8)]">
             <section className="border-b border-[color:var(--color-divider)] pb-[var(--space-6)]">
               <h2 className="font-ui text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
-                МАЗМҰНЫ
+                {m.articleShell.contents}
               </h2>
-              <nav aria-label="Table of contents" className="mt-[var(--space-4)]">
+              <nav aria-label={ariaLabels.toc} className="mt-[var(--space-4)]">
                 <ul className="flex flex-col gap-3">
                   {toc.map((item) => (
                     <li key={item.id}>
@@ -154,7 +170,7 @@ export function ArticlePageShell({
 
             <section className="border-b border-[color:var(--color-divider)] pb-[var(--space-6)]">
               <h2 className="font-ui text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-muted)]">
-                БӨЛІСУ
+                {m.articleShell.share}
               </h2>
               <div className="mt-[var(--space-4)] flex flex-col gap-3">
                 <a
@@ -172,11 +188,11 @@ export function ArticlePageShell({
                   className="button-ghost justify-start"
                 >
                   {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
-                  {copied ? "Сілтеме көшірілді" : "Сілтемені көшіру"}
+                  {copied ? m.articleShell.copied : m.articleShell.copyLink}
                 </button>
                 <a href={shareUrl || "#"} className="button-ghost justify-start no-underline">
                   <Link2 size={16} />
-                  Ашық сілтеме
+                  {m.articleShell.openLink}
                 </a>
               </div>
             </section>

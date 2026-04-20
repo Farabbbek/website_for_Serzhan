@@ -1,52 +1,107 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
-
-const strategies = [
-  "Әлеуметтік желілердегі медиа контентті кәсіби деңгейге көтеру",
-  "Факультет блогерлерімен серіктестік орнату",
-  "Жобаларды тиімді жарнамалау",
-  "Философия және психология факультетін Қарағандыдан тыс аймақтарда таныту",
-  "Жас философтар арасында тұрақты қауымдастық қалыптастыру",
-  "Философияға прогрессивті пікірлер мен жаңа көзқарастар ұсыну",
-];
-
-const team = [
-  { role: "Куратор", name: "Marat Zhumageldinov" },
-  { role: "Редактор", name: "Al-Farabi Tusup" },
-  { role: "Контент координаторы", name: "Daniyar Bekbol" },
-  { role: "Қауымдастық менеджері", name: "Aigerim Nurtai" },
-];
+import { useLanguage } from "@/contexts/LanguageProvider";
 
 export default function AboutPage() {
+  const { locale, m } = useLanguage();
+  const strategies =
+    locale === "ru"
+      ? [
+          "Поднять качество медиаконтента в социальных сетях до профессионального уровня",
+          "Выстроить партнёрство с факультетскими блогерами",
+          "Эффективно продвигать проекты",
+          "Представлять факультет философии и психологии за пределами Караганды",
+          "Формировать устойчивое сообщество молодых философов",
+          "Предлагать философии прогрессивные мнения и новые взгляды",
+        ]
+      : locale === "en"
+        ? [
+            "Raise the quality of social media content to a professional level",
+            "Build partnerships with faculty bloggers",
+            "Promote projects effectively",
+            "Represent the Faculty of Philosophy and Psychology beyond Karaganda",
+            "Build a sustainable community of young philosophers",
+            "Offer progressive opinions and new perspectives in philosophy",
+          ]
+        : [
+            "Әлеуметтік желілердегі медиа контентті кәсіби деңгейге көтеру",
+            "Факультет блогерлерімен серіктестік орнату",
+            "Жобаларды тиімді жарнамалау",
+            "Философия және психология факультетін Қарағандыдан тыс аймақтарда таныту",
+            "Жас философтар арасында тұрақты қауымдастық қалыптастыру",
+            "Философияға прогрессивті пікірлер мен жаңа көзқарастар ұсыну",
+          ];
+
   useEffect(() => {
-    const els = document.querySelectorAll(".reveal");
+    let observer: IntersectionObserver | null = null;
+    let scrollFallbackAttached = false;
 
-    if (typeof IntersectionObserver === "undefined") {
-      els.forEach((el) => el.classList.add("visible"));
-      return;
-    }
+    const revealInView = () => {
+      const els = Array.from(document.querySelectorAll<HTMLElement>(".about-page .reveal:not(.visible)"));
+      if (!els.length) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12 }
-    );
+      if (!observer) {
+        observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                entry.target.removeAttribute("data-reveal-observed");
+                observer?.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+        );
+      }
 
-    els.forEach((el) => observer.observe(el));
+      els.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const inView = rect.top <= window.innerHeight - 40 && rect.bottom >= 0;
 
-    return () => observer.disconnect();
+        if (inView) {
+          el.classList.add("visible");
+          el.removeAttribute("data-reveal-observed");
+          observer?.unobserve(el);
+          return;
+        }
+
+        if (el.dataset.revealObserved === "true") return;
+        el.dataset.revealObserved = "true";
+        observer?.observe(el);
+      });
+    };
+
+    const attachScrollFallback = () => {
+      if (scrollFallbackAttached) return;
+      scrollFallbackAttached = true;
+      window.addEventListener("scroll", revealInView, { passive: true });
+      window.addEventListener("resize", revealInView);
+    };
+
+    const frameId = window.requestAnimationFrame(() => {
+      revealInView();
+      attachScrollFallback();
+    });
+    const timeoutA = window.setTimeout(revealInView, 120);
+    const timeoutB = window.setTimeout(revealInView, 420);
+    const mutationObserver = new MutationObserver(() => revealInView());
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutA);
+      window.clearTimeout(timeoutB);
+      window.removeEventListener("scroll", revealInView);
+      window.removeEventListener("resize", revealInView);
+      mutationObserver.disconnect();
+      observer?.disconnect();
+    };
   }, []);
 
   return (
-    <div className="about-page-shell">
+    <div className="about-page-shell about-page">
       <section className="about-hero-editorial">
         <div className="about-hero-topline">
           <span>Е.А.БӨКЕТОВ АТЫНДАҒЫ КАРУ</span>
@@ -62,15 +117,15 @@ export default function AboutPage() {
           </div>
 
           <div className="about-hero-sub-wrap">
-            <p className="about-hero-subtitle">Студенттік философия платформасы</p>
+            <p className="about-hero-subtitle">{m.about.subtitle}</p>
           </div>
         </div>
 
         <div className="about-hero-bottomline">
-          <p className="about-hero-note">Ойлау, пікірталас және интеллектуалдық қауымдастық кеңістігі</p>
+          <p className="about-hero-note">{m.about.note}</p>
 
           <div className="about-scroll-indicator" aria-hidden="true">
-            <span>ТӨМЕН</span>
+            <span>{m.about.down}</span>
             <div className="scroll-line" />
           </div>
         </div>
@@ -86,45 +141,37 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="about-mission-section reveal">
-        <div className="about-mission-label">ЖОБА МАҚСАТЫ</div>
-        <div className="about-mission-text">
-          <p>
-            Біздің жоба – Қазақстанның түкпір-түкпіріндегі философия студенттерін біріктіретін заманауи
-            онлайн-платформа құруға бағытталған.
-          </p>
-          <p>
-            Сайттың негізгі мақсаты – студенттер арасында тұрақты байланыс орнатып, ортақ интеллектуалдық
-            кеңістік қалыптастыру. Платформа арқылы қатысушылар академиялық материалдармен алмасып,
-            пікірталастар ұйымдастырып, бірлескен жобаларды жүзеге асыра алады.
-          </p>
-          <p>
-            Бұл жоба әртүрлі университет студенттері арасындағы ынтымақтастықты күшейтіп, философиялық ойлау
-            мен кәсіби дамуға қолайлы орта ұсынады.
-          </p>
+      <div className="about-section-transition reveal">
+        <span className="transition-label">{m.about.transition}</span>
+        <div className="transition-rule" />
+      </div>
+
+      <section className="about-section about-mission reveal">
+        <div className="about-section-label-col">
+          <span className="about-section-label">{m.about.missionLabel}</span>
+        </div>
+        <div className="about-section-content-col">
+          <p>{m.about.mission1}</p>
+          <p>{m.about.mission2}</p>
+          <p>{m.about.mission3}</p>
         </div>
       </section>
 
-      <section className="about-quote-section reveal">
+      <section className="about-quote-full reveal">
         <div className="about-quote-inner">
-          <span className="about-section-label about-quote-label">ФИЛОСОФИЯ ДЕГЕН НЕ?</span>
-          <span className="about-quote-mark">&quot;</span>
-          <blockquote className="about-quote-text">
-            Философия деген – даналықпен айналысу ғана емес, сонымен қатар соған деген құштарлық пен махаббат.
-          </blockquote>
-          <p className="about-quote-text-secondary">
-            Бұл – ойлауға, елестетуге және дүниені тереңірек түсінуге мүмкіндік беретін еркін кеңістік.
-          </p>
+          <blockquote className="about-blockquote">{m.about.quote1}</blockquote>
+          <p className="about-quote-second">{m.about.quote2}</p>
+          <span className="about-quote-attr">{m.about.quoteTitle}</span>
         </div>
       </section>
 
-      <section className="about-strategy-section reveal">
-        <div className="about-strategy-header reveal">
-          <span className="about-section-label">БІЗДІҢ СТРАТЕГИЯМЫЗ</span>
+      <section className="about-section about-strategy reveal">
+        <div className="about-section-label-col">
+          <span className="about-section-label">{m.about.strategyLabel}</span>
         </div>
         <div className="about-strategy-list">
           {strategies.map((item, i) => (
-            <div key={item} className="strategy-item reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+            <div key={i} className="strategy-row reveal" style={{ transitionDelay: `${i * 70}ms` }}>
               <span className="strategy-num">{String(i + 1).padStart(2, "0")}</span>
               <p className="strategy-text">{item}</p>
             </div>
@@ -132,55 +179,35 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="about-us-section reveal">
-        <div className="about-us-text">
-          <span className="about-section-label">БІЗ ТУРАЛЫ</span>
-          <h2 className="about-us-heading">Ф-23-1К</h2>
-          <div className="about-us-body">
-            <p>
-              Біз – Е.А.Бөкетов атындағы Қарағанды университетінің Философия және психология факультетінде білім
-              алып жүрген Ф-23-1К тобының 3 курс студенттеріміз.
-            </p>
-            <p>
-              Біздің топтың ерекшелігі – шағын әрі бірегей құрамда болуымыз. Бұл бізге өзара тығыз
-              интеллектуалдық байланыс орнатып, ортақ идеяларды бірлесіп дамытуға мүмкіндік береді.
-            </p>
-            <p>
-              Кураторымыз – <strong>Марат Жұмагельдинов.</strong> Біздің оқу бағдарымыз классикалық философияны,
-              білімге деген құштарлықты және заманауи қоғамға ашық интеллектуалдық ұстанымды негізге алады.
-            </p>
-          </div>
-          <div className="about-us-meta">
-            <span>Е.А.Бөкетов атындағы КарГУ</span>
-            <span>·</span>
-            <span>Қарағанды, 2026</span>
-          </div>
-        </div>
-
-        <div className="about-us-image-wrap">
-          <Image
+      <section className="about-us-full reveal">
+        <div className="about-us-img-side">
+          <img
             src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/f16b530876b942db713e40be67a59ae16c4614d3.jpg"
-            alt="Е.А.Бөкетов атындағы Қарағанды университеті"
-            className="about-us-image"
-            fill
-            sizes="(max-width: 1024px) 100vw, 42vw"
+            alt={m.about.university}
+            className="about-us-photo"
+            loading="lazy"
           />
+          <div className="about-us-img-caption">{m.about.university}</div>
+        </div>
+
+        <div className="about-us-text-side">
+          <span className="about-section-label">{m.about.aboutLabel}</span>
+          <h2 className="about-us-group">Ф-23-1К</h2>
+
+          <div className="about-us-paragraphs">
+            <p>{m.about.about1}</p>
+            <p>{m.about.about2}</p>
+            <p>{m.about.about3}</p>
+          </div>
+
+          <div className="about-us-meta-row">
+            <span>{m.about.metaUniversity}</span>
+            <span className="meta-dot">·</span>
+            <span>{m.about.metaCity}</span>
+          </div>
         </div>
       </section>
 
-      <section className="about-team-section reveal">
-        <div className="about-team-header">
-          <span className="about-section-label">КОМАНДА</span>
-        </div>
-        <div className="about-team-grid">
-          {team.map((member) => (
-            <div key={member.name} className="team-member">
-              <div className="team-role">{member.role}</div>
-              <div className="team-name">{member.name}</div>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

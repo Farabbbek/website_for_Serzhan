@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import clsx from "clsx";
+import { useLanguage } from "@/contexts/LanguageProvider";
 import type { Post } from "@/types/blog";
 
 const prefersReducedMotion =
@@ -102,12 +103,13 @@ export function PostCard({
   post,
   variant = "default",
 }: PostCardProps) {
+  const { m } = useLanguage();
   const publishedDate = formatPublishedDate(post.published_at);
   const authorName =
     post.author_name?.trim() ||
     post.profiles?.full_name ||
     post.profiles?.username ||
-    "Редакция";
+    m.common.editorial;
 
   if (variant === "compact") {
     return (

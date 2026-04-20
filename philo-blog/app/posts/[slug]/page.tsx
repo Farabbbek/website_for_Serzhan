@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
+import { getServerMessages } from "@/lib/i18n/server";
 import { getPostBySlug } from "@/lib/queries/posts";
 
 type ArticlePageProps = {
@@ -17,8 +18,10 @@ type ArticleBlock =
   | { type: "ul"; items: string[] }
   | { type: "blockquote"; content: string };
 
-function formatDate(dateString: string) {
-  return new Intl.DateTimeFormat("kk-KZ", {
+function formatDate(dateString: string, locale: "kk" | "ru" | "en") {
+  const intlLocale = locale === "kk" ? "kk-KZ" : locale === "ru" ? "ru-RU" : "en-US";
+
+  return new Intl.DateTimeFormat(intlLocale, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -213,10 +216,16 @@ export async function generateMetadata({
 }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
+  const { locale } = await getServerMessages();
+  const missingTitle = {
+    kk: "Мақала табылмады | ZERDE Blog",
+    ru: "Статья не найдена | ZERDE Blog",
+    en: "Article not found | ZERDE Blog",
+  }[locale];
 
   if (!post) {
     return {
-      title: "Мақала табылмады | ZERDE Blog",
+      title: missingTitle,
     };
   }
 
@@ -228,6 +237,7 @@ export async function generateMetadata({
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
+  const { locale } = await getServerMessages();
   const post = await getPostBySlug(slug);
 
   if (!post) {
@@ -260,17 +270,46 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     longestTitleWordLength >= 20
       ? "break-words [overflow-wrap:anywhere]"
       : "break-normal [overflow-wrap:normal]";
+  const copy = {
+    kk: {
+      home: "Басты бет",
+      breadcrumb: "Breadcrumb",
+      readingMinutes: "мин оқу",
+      views: "қаралым",
+      supplemental: "Қосымша материалдар",
+      downloadArticle: "Мақаланы жүктеу",
+      openSource: "Дереккөзге өту",
+    },
+    ru: {
+      home: "Главная",
+      breadcrumb: "Хлебные крошки",
+      readingMinutes: "мин чтения",
+      views: "просмотров",
+      supplemental: "Дополнительные материалы",
+      downloadArticle: "Скачать статью",
+      openSource: "Открыть источник",
+    },
+    en: {
+      home: "Home",
+      breadcrumb: "Breadcrumb",
+      readingMinutes: "min read",
+      views: "views",
+      supplemental: "Additional materials",
+      downloadArticle: "Download article",
+      openSource: "Open source",
+    },
+  }[locale];
 
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
       <div className="mx-auto w-full max-w-[78rem]">
         <div className="mx-auto w-full max-w-[720px] px-6">
           <nav
-            aria-label="Breadcrumb"
+            aria-label={copy.breadcrumb}
             className="font-ui text-[length:var(--text-xs)] text-[color:var(--color-text-faint)]"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <Link href="/posts">Home</Link>
+              <Link href="/posts">{copy.home}</Link>
               <span>→</span>
               {post.categories ? (
                 <Link href={`/category/${post.categories.slug}`}>
@@ -298,11 +337,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <div className="meta-row font-ui">
               <span>{displayAuthor}</span>
               <span>·</span>
-              <span>{formatDate(post.published_at)}</span>
+              <span>{formatDate(post.published_at, locale)}</span>
               <span>·</span>
-              <span>{readingTimeMinutes} мин оқу</span>
+              <span>{readingTimeMinutes} {copy.readingMinutes}</span>
               <span>·</span>
-              <span>{post.views_count} views</span>
+              <span>{post.views_count} {copy.views}</span>
             </div>
           </div>
         </div>
@@ -348,7 +387,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {hasSupplementalLinks ? (
           <section className="article-supplemental">
             <h2 className="font-ui text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-              Қосымша материалдар
+              {copy.supplemental}
             </h2>
             <div className="article-supplemental-actions mt-4 flex flex-wrap gap-3">
               {post.file_url ? (
@@ -360,7 +399,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   className="inline-flex items-center gap-2 rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 py-3 font-ui text-[length:var(--text-sm)] font-semibold text-[color:var(--color-text)] no-underline transition-colors hover:border-[color:var(--color-primary)] hover:text-[color:var(--color-primary)]"
                 >
                   <Download size={16} />
-                  Мақаланы жүктеу
+                  {copy.downloadArticle}
                 </a>
               ) : null}
 
@@ -371,7 +410,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-bg)] px-4 py-3 font-ui text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-muted)] no-underline transition-colors hover:border-[color:var(--color-primary)] hover:text-[color:var(--color-primary)]"
                 >
-                  Дереккөзге өту
+                  {copy.openSource}
                 </a>
               ) : null}
             </div>
