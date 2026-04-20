@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
-import CategoryTabs from "@/components/layout/CategoryTabs";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
@@ -45,7 +44,6 @@ export default async function NewsDetailPage({ params }: Props) {
 
   return (
     <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
-      <CategoryTabs active="news" />
       <article className="mx-auto max-w-[760px]">
         <Link href="/news" className="text-[13px] text-[color:var(--color-text-muted)] no-underline">
           ← Жаңалықтар

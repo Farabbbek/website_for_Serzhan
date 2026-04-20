@@ -5,10 +5,11 @@ import RootLayoutClient from "@/components/layout/RootLayoutClient";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import "./globals.css";
 
+const rawUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  ),
+  metadataBase: new URL(siteUrl),
   title: "ZERDE Blog — Цифровизация философии",
   description:
     "Philo Blog explores the digital future of philosophy through essays, criticism, and editorial reflections in Kazakh and Russian contexts.",

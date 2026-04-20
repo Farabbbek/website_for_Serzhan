@@ -14,12 +14,12 @@ export default function ForumPage() {
           </h1>
 
           <p className="mx-auto mt-[var(--space-4)] max-w-[42ch] font-body text-[length:var(--text-base)] leading-[1.75] text-[color:var(--color-text-muted)]">
-            Жақын уақытта мұнда пікірталас, сұрақ қою және ой алмасу алаңы
-            іске қосылады.
+            В ближайшее время здесь откроется площадка для дискуссий,
+            вопросов и обмена идеями.
           </p>
 
           <p className="mt-[var(--space-6)] font-ui text-[length:var(--text-sm)] uppercase tracking-[0.16em] text-[color:var(--color-text-faint)]">
-            ZERDE жаңалықтарын қадағалаңыз
+            Следите за обновлениями ZERDE
           </p>
         </div>
       </div>

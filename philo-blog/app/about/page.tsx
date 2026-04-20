@@ -1,199 +1,184 @@
 "use client";
 
-import { animate, motion, useInView } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
+import Image from "next/image";
 
-function FadeUp({
-  children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{
-        duration: 0.7,
-        delay,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function CountUp({
-  value,
-  suffix = "",
-  label,
-}: {
-  value: number;
-  suffix?: string;
-  label: string;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-
-    const controls = animate(0, value, {
-      duration: 1.1,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (latest) => setDisplayValue(Math.round(latest)),
-    });
-
-    return () => controls.stop();
-  }, [inView, value]);
-
-  return (
-    <div
-      ref={ref}
-      className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-6 py-7"
-    >
-      <motion.span
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="block font-display text-[42px] leading-none text-[color:var(--color-text)]"
-      >
-        {displayValue}
-        {suffix}
-      </motion.span>
-      <p className="mt-3 font-ui text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-const teamMembers = [
-  {
-    name: "Marat Zhumageldinov",
-    role: "Куратор",
-  },
-  {
-    name: "Al-Farabi Tusup",
-    role: "Редактор",
-  },
-  {
-    name: "Daniyar Bekbol",
-    role: "Контент координаторы",
-  },
-  {
-    name: "Aigerim Nurtai",
-    role: "Қоғамдастық менеджері",
-  },
+const strategies = [
+  "Әлеуметтік желілердегі медиа контентті кәсіби деңгейге көтеру",
+  "Факультет блогерлерімен серіктестік орнату",
+  "Жобаларды тиімді жарнамалау",
+  "Философия және психология факультетін Қарағандыдан тыс аймақтарда таныту",
+  "Жас философтар арасында тұрақты қауымдастық қалыптастыру",
+  "Философияға прогрессивті пікірлер мен жаңа көзқарастар ұсыну",
 ];
 
-const smoothEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
-const teamContainer = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.12 },
-  },
-};
-
-const teamItem = {
-  hidden: { opacity: 0, y: 32 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: smoothEase },
-  },
-};
+const team = [
+  { role: "Куратор", name: "Marat Zhumageldinov" },
+  { role: "Редактор", name: "Al-Farabi Tusup" },
+  { role: "Контент координаторы", name: "Daniyar Bekbol" },
+  { role: "Қауымдастық менеджері", name: "Aigerim Nurtai" },
+];
 
 export default function AboutPage() {
+  useEffect(() => {
+    const els = document.querySelectorAll(".reveal");
+
+    if (typeof IntersectionObserver === "undefined") {
+      els.forEach((el) => el.classList.add("visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+
+    els.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div style={{ width: "100vw", marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }}>
-      <section
-        className="flex min-h-screen items-center justify-center bg-[color:var(--color-bg)] px-6 py-24 text-[color:var(--color-text)]"
-      >
-        <div className="mx-auto w-full max-w-[1120px]">
-          <motion.h1
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            style={{ fontSize: "clamp(3rem, 8vw, 8rem)", fontWeight: 800, lineHeight: 0.96 }}
-            className="font-display"
-          >
-            ZERDE туралы
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.9, delay: 0.3 }}
-            className="mt-6 max-w-[680px] font-ui text-[14px] uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]"
-          >
-            Қазақстан философия студенттерінің платформасы
-          </motion.p>
+    <div className="about-page-shell">
+      <section className="about-hero-editorial">
+        <div className="about-hero-topline">
+          <span>Е.А.БӨКЕТОВ АТЫНДАҒЫ КАРУ</span>
+          <span className="hero-dot" />
+          <span>Ф-23-1К</span>
+          <span className="hero-dot" />
+          <span>ҚАРАҒАНДЫ</span>
         </div>
-      </section>
 
-      <section className="bg-[color:var(--color-bg)] px-6 py-24">
-        <div className="mx-auto w-full max-w-[1120px]">
-          <FadeUp>
-            <h2 className="font-display text-[clamp(2rem,4.8vw,4.1rem)] text-[color:var(--color-text)]">
-              Біздің миссия
-            </h2>
-            <p className="mt-7 max-w-[860px] font-ui text-[15px] leading-[1.9] uppercase tracking-[0.07em] text-[color:var(--color-text-muted)]">
-              Философияны барлығына қолжетімді ету және Қазақстанның әр аймағындағы студенттерді бір ортаға жинау.
-              Біз ашық пікірталасқа, академиялық еркіндікке және сапалы білім алмасуға негізделген цифрлық орта құрамыз.
-            </p>
-          </FadeUp>
+        <div className="about-hero-main">
+          <div className="about-hero-word-wrap">
+            <h1 className="about-hero-word">ZERDE</h1>
+          </div>
+
+          <div className="about-hero-sub-wrap">
+            <p className="about-hero-subtitle">Студенттік философия платформасы</p>
+          </div>
         </div>
-      </section>
 
-      <section className="border-y border-[color:var(--color-divider)] bg-[color:var(--color-surface-2)] px-6 py-20">
-        <div className="mx-auto w-full max-w-[1120px]">
-          <FadeUp>
-            <p className="mb-8 font-ui text-[11px] uppercase tracking-[0.16em] text-[color:var(--color-primary)]">Қауымдастық статистикасы</p>
-          </FadeUp>
-          <div className="grid gap-4 md:grid-cols-3">
-            <CountUp value={500} suffix="+" label="Студент" />
-            <CountUp value={120} suffix="+" label="Талқылау тақырыбы" />
-            <CountUp value={40} suffix="+" label="Автор" />
+        <div className="about-hero-bottomline">
+          <p className="about-hero-note">Ойлау, пікірталас және интеллектуалдық қауымдастық кеңістігі</p>
+
+          <div className="about-scroll-indicator" aria-hidden="true">
+            <span>ТӨМЕН</span>
+            <div className="scroll-line" />
           </div>
         </div>
       </section>
 
-      <section className="bg-[color:var(--color-bg)] px-6 py-24">
-        <div className="mx-auto w-full max-w-[1120px]">
-          <FadeUp>
-            <h3 className="font-display text-[clamp(1.8rem,4vw,3.2rem)] text-[color:var(--color-text)]">
-              Команда
-            </h3>
-          </FadeUp>
+      <section className="about-marquee-strip" aria-hidden="true">
+        <div className="about-marquee-track">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} className="about-marquee-item">
+              ZERDE · ФИЛОСОФИЯ · ОЙЛАУ · ҚАУЫМДАСТЫҚ · ДИАЛОГ ·
+            </span>
+          ))}
+        </div>
+      </section>
 
-          <motion.div
-            variants={teamContainer}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="mt-10 grid gap-5 md:grid-cols-2"
-          >
-            {teamMembers.map((member) => (
-              <motion.article
-                key={member.name}
-                variants={teamItem}
-                className="rounded-[18px] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6"
-              >
-                <p className="font-display text-[30px] leading-[1.02] text-[color:var(--color-text)]">{member.name}</p>
-                <p className="mt-3 font-ui text-[11px] uppercase tracking-[0.14em] text-[color:var(--color-primary)]">{member.role}</p>
-              </motion.article>
-            ))}
-          </motion.div>
+      <section className="about-mission-section reveal">
+        <div className="about-mission-label">ЖОБА МАҚСАТЫ</div>
+        <div className="about-mission-text">
+          <p>
+            Біздің жоба – Қазақстанның түкпір-түкпіріндегі философия студенттерін біріктіретін заманауи
+            онлайн-платформа құруға бағытталған.
+          </p>
+          <p>
+            Сайттың негізгі мақсаты – студенттер арасында тұрақты байланыс орнатып, ортақ интеллектуалдық
+            кеңістік қалыптастыру. Платформа арқылы қатысушылар академиялық материалдармен алмасып,
+            пікірталастар ұйымдастырып, бірлескен жобаларды жүзеге асыра алады.
+          </p>
+          <p>
+            Бұл жоба әртүрлі университет студенттері арасындағы ынтымақтастықты күшейтіп, философиялық ойлау
+            мен кәсіби дамуға қолайлы орта ұсынады.
+          </p>
+        </div>
+      </section>
+
+      <section className="about-quote-section reveal">
+        <div className="about-quote-inner">
+          <span className="about-section-label about-quote-label">ФИЛОСОФИЯ ДЕГЕН НЕ?</span>
+          <span className="about-quote-mark">&quot;</span>
+          <blockquote className="about-quote-text">
+            Философия деген – даналықпен айналысу ғана емес, сонымен қатар соған деген құштарлық пен махаббат.
+          </blockquote>
+          <p className="about-quote-text-secondary">
+            Бұл – ойлауға, елестетуге және дүниені тереңірек түсінуге мүмкіндік беретін еркін кеңістік.
+          </p>
+        </div>
+      </section>
+
+      <section className="about-strategy-section reveal">
+        <div className="about-strategy-header reveal">
+          <span className="about-section-label">БІЗДІҢ СТРАТЕГИЯМЫЗ</span>
+        </div>
+        <div className="about-strategy-list">
+          {strategies.map((item, i) => (
+            <div key={item} className="strategy-item reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+              <span className="strategy-num">{String(i + 1).padStart(2, "0")}</span>
+              <p className="strategy-text">{item}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="about-us-section reveal">
+        <div className="about-us-text">
+          <span className="about-section-label">БІЗ ТУРАЛЫ</span>
+          <h2 className="about-us-heading">Ф-23-1К</h2>
+          <div className="about-us-body">
+            <p>
+              Біз – Е.А.Бөкетов атындағы Қарағанды университетінің Философия және психология факультетінде білім
+              алып жүрген Ф-23-1К тобының 3 курс студенттеріміз.
+            </p>
+            <p>
+              Біздің топтың ерекшелігі – шағын әрі бірегей құрамда болуымыз. Бұл бізге өзара тығыз
+              интеллектуалдық байланыс орнатып, ортақ идеяларды бірлесіп дамытуға мүмкіндік береді.
+            </p>
+            <p>
+              Кураторымыз – <strong>Марат Жұмагельдинов.</strong> Біздің оқу бағдарымыз классикалық философияны,
+              білімге деген құштарлықты және заманауи қоғамға ашық интеллектуалдық ұстанымды негізге алады.
+            </p>
+          </div>
+          <div className="about-us-meta">
+            <span>Е.А.Бөкетов атындағы КарГУ</span>
+            <span>·</span>
+            <span>Қарағанды, 2026</span>
+          </div>
+        </div>
+
+        <div className="about-us-image-wrap">
+          <Image
+            src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/f16b530876b942db713e40be67a59ae16c4614d3.jpg"
+            alt="Е.А.Бөкетов атындағы Қарағанды университеті"
+            className="about-us-image"
+            fill
+            sizes="(max-width: 1024px) 100vw, 42vw"
+          />
+        </div>
+      </section>
+
+      <section className="about-team-section reveal">
+        <div className="about-team-header">
+          <span className="about-section-label">КОМАНДА</span>
+        </div>
+        <div className="about-team-grid">
+          {team.map((member) => (
+            <div key={member.name} className="team-member">
+              <div className="team-role">{member.role}</div>
+              <div className="team-name">{member.name}</div>
+            </div>
+          ))}
         </div>
       </section>
     </div>

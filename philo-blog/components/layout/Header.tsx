@@ -18,7 +18,7 @@ import type { Database } from "@/lib/supabase/types";
 
 const leftMainLinks = [
   { href: "/about", label: "БІЗ ТУРАЛЫ" },
-  { href: "/posts", label: "ЖУРНАЛ" },
+  { href: "/forum", label: "ФОРУМ" },
 ];
 
 const rightMainLinks = [
@@ -28,7 +28,6 @@ const rightMainLinks = [
 
 const categories = [
   { label: "МАҚАЛАЛАР", href: "/category/maqalalar" },
-  { label: "ФОРУМ", href: "/forum" },
   { label: "ЖАҢАЛЫҚТАР", href: "/news" },
   { label: "МАТЕРИАЛДАР", href: "/materials" },
   { label: "ПОДКАСТТАР", href: "/podcasts" },
@@ -36,7 +35,6 @@ const categories = [
 
 const mobileOverlayLinks = [
   { href: "/", label: "БАСТЫ БЕТ" },
-  { href: "/posts", label: "ЖУРНАЛ" },
   { href: "/category/maqalalar", label: "МАҚАЛАЛАР" },
   { href: "/about", label: "БІЗ ТУРАЛЫ" },
   { href: "/auth/login", label: "КІРУ" },
@@ -45,7 +43,7 @@ const mobileOverlayLinks = [
 
 const navRoutes: Record<string, string> = {
   "БІЗ ТУРАЛЫ": "/about",
-  "ЖУРНАЛ": "/posts",
+  "ФОРУМ": "/forum",
   "КІРУ": "/auth/login",
   "ЖАЗЫЛУ": "/connect",
 };
@@ -294,12 +292,12 @@ function LanguageSwitcher() {
 
 function UtilityBar() {
   return (
-    <div className="flex h-10 w-full">
-      <div className="flex flex-[1.5] items-center justify-start border-r border-divider xl:flex-[1.25] sm:justify-start" />
-      <div className="hidden flex-1 border-r border-divider md:block" />
-      <div className="hidden flex-[2.5] border-r border-divider xl:flex-3 md:block" />
-      <div className="hidden flex-1 border-r border-divider md:block" />
-      <div className="flex flex-[1.5] items-center justify-center gap-4 xl:flex-[1.25]">
+    <div className="grid h-10 w-full grid-cols-[1fr_1fr_2fr_1fr_1fr]">
+      <div className="border-r border-divider" />
+      <div className="border-r border-divider" />
+      <div className="border-r border-divider" />
+      <div className="border-r border-divider" />
+      <div className="flex items-center justify-center gap-4">
         <LanguageSwitcher />
         <ThemeButton />
       </div>
@@ -438,9 +436,9 @@ export function Header() {
   const mobileLinks = authUser
     ? [
         { href: "/", label: "БАСТЫ БЕТ" },
-        { href: "/posts", label: "ЖУРНАЛ" },
         { href: "/category/maqalalar", label: "МАҚАЛАЛАР" },
         { href: "/about", label: "БІЗ ТУРАЛЫ" },
+        { href: "/forum", label: "ФОРУМ" },
         { href: "/profile", label: "ПРОФИЛЬ" },
         ...(profile?.role === "admin" ? [{ href: "/admin", label: "АДМИН ПАНЕЛЬ" }] : []),
         { href: "/connect", label: "ЖАЗЫЛУ" },
@@ -490,7 +488,7 @@ export function Header() {
           style={{ overflow: "visible" }}
         >
           <div
-            className="flex flex-[1.5] xl:flex-[1.25] border-r border-divider"
+            className="flex flex-1 border-r border-divider"
             style={{ alignItems: "stretch", height: "100%", overflow: "visible" }}
           >
             <NavCellItem
@@ -514,7 +512,7 @@ export function Header() {
           </div>
 
           <div
-            className="flex flex-[2.5] flex-col items-center justify-center border-r border-divider xl:flex-3 relative"
+            className="relative flex flex-2 flex-col items-center justify-center border-r border-divider"
             style={{ backgroundColor: "var(--color-bg)" }}
           >
             <MotionLink
@@ -632,7 +630,7 @@ export function Header() {
           </div>
 
           <div
-            className="relative flex flex-[1.5] xl:flex-[1.25]"
+            className="relative flex flex-1"
             style={{ alignItems: "stretch", height: "100%", overflow: "visible" }}
           >
             <NavCellItem
@@ -690,7 +688,7 @@ export function Header() {
                     const isHovered = label === hoveredCategory;
 
                     const textColor = isActive
-                      ? "var(--color-text)"
+                      ? "var(--color-bg)"
                       : "var(--color-text-muted)";
 
                     return (
@@ -721,7 +719,7 @@ export function Header() {
                           <motion.div
                             layoutId="category-active-bg"
                             className="absolute inset-0 z-0"
-                            style={{ background: "rgba(197,64,26,0.12)" }}
+                            style={{ background: "var(--color-text)" }}
                             transition={{ type: "spring", stiffness: 380, damping: 35 }}
                           />
                         ) : null}

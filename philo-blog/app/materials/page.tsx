@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { Download } from "lucide-react";
+import { FileTypeBadge } from "@/components/ui/FileTypeBadge";
 import { createClient } from "@/lib/supabase/server";
+import { getMaterialType } from "@/lib/utils/getMaterialType";
 import type { Database } from "@/lib/supabase/types";
 
 type PostRow = Database["public"]["Tables"]["posts"]["Row"] & {
@@ -13,6 +15,17 @@ const levelLabels: Record<string, string> = {
   master: "Магистр",
   phd: "PhD",
 };
+
+function parseContentValue(content: string, key: string): string | null {
+  const line = content
+    .split("\n")
+    .find((item) => item.trim().startsWith(`${key}:`));
+
+  if (!line) return null;
+
+  const value = line.replace(`${key}:`, "").trim();
+  return value || null;
+}
 
 function getPrimaryMaterialResourceUrl(content: string, fallbackUrl: string | null): string | null {
   const resourcesLine = content
@@ -41,6 +54,24 @@ function getPrimaryMaterialResourceUrl(content: string, fallbackUrl: string | nu
   return fallbackUrl;
 }
 
+function resolveDescription(excerpt: string | null, content: string): string {
+  const cleanedExcerpt = excerpt?.trim();
+  if (cleanedExcerpt) return cleanedExcerpt;
+
+  const body = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.includes(":"))
+    .join(" ")
+    .trim();
+
+  if (!body) {
+    return "Оқу материалының толық сипаттамасын материал бетінде көре аласыз.";
+  }
+
+  return body.length > 180 ? `${body.slice(0, 179).trimEnd()}…` : body;
+}
+
 export default async function MaterialsPage() {
   const supabase = await createClient();
   const { data } = supabase
@@ -54,62 +85,91 @@ export default async function MaterialsPage() {
   const posts = ((data as PostRow[] | null) ?? []);
 
   if (posts.length === 0) {
-    return null;
+    return (
+      <section className="py-[clamp(var(--space-12),6vw,var(--space-24))] materials-library">
+        <div className="empty-state">
+          <span style={{ fontSize: 48 }}>📂</span>
+          <h3>Материалдар жоқ</h3>
+          <p>Жақын арада материалдар қосылады</p>
+        </div>
+      </section>
+    );
   }
 
   return (
-    <section className="py-[clamp(var(--space-12),6vw,var(--space-24))]">
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+    <section className="py-[clamp(var(--space-12),6vw,var(--space-24))] materials-library">
+      <div className="page-header">
+        <h1 className="page-title">МАТЕРИАЛДАР</h1>
+        <p className="page-subtitle">
+          Ғылыми мақалалар, оқу құралдары және зерттеу жұмыстары
+        </p>
+      </div>
+
+      <div className="materials-grid">
         {posts.map((post) => {
-          const subject = post.content
-            ?.split("\n")
-            .find((line) => line.startsWith("Пән: "))
-            ?.replace("Пән: ", "");
+          const subject = parseContentValue(post.content ?? "", "Пән");
+          const authorFromContent = parseContentValue(post.content ?? "", "Автор");
+          const author = authorFromContent || post.author_name || "Редакция";
           const resourceUrl = getPrimaryMaterialResourceUrl(post.content ?? "", post.file_url);
+          const materialMeta = getMaterialType(resourceUrl ?? "");
+          const description = resolveDescription(post.excerpt, post.content ?? "");
 
           return (
-            <article
-              key={post.id}
-              className="rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 transition-colors hover:border-[#059669]"
-            >
-              <div className="flex flex-col gap-4">
+            <article key={post.id} className="material-card">
+              <div className="material-thumb-wrap">
                 {post.cover_url ? (
-                  <div className="overflow-hidden rounded-[8px] border border-[color:var(--color-border)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={post.cover_url} alt={post.title} className="aspect-[16/9] w-full object-cover" />
+                  <img
+                    src={post.cover_url}
+                    alt={post.title}
+                    className="material-thumb-img"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="material-thumb-placeholder" aria-hidden="true">
+                    <span className="material-thumb-icon">{materialMeta.icon}</span>
+                    <span className="material-thumb-filetype">{materialMeta.label}</span>
                   </div>
-                ) : null}
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex rounded-full bg-[#05966915] px-3 py-1 text-[11px] font-semibold text-[#059669]">
-                    {levelLabels[post.level ?? "all"] ?? "Барлығы"}
-                  </span>
-                  {subject ? (
-                    <span className="inline-flex rounded-full bg-[color:var(--color-surface-offset)] px-3 py-1 text-[11px] font-semibold text-[color:var(--color-text-muted)]">
-                      {subject}
-                    </span>
-                  ) : null}
+                )}
+
+                <div className="material-thumb-overlay" />
+
+                <FileTypeBadge fileUrl={resourceUrl ?? ""} />
+                <span className="material-category-badge">МАТЕРИАЛ</span>
+              </div>
+
+              <div className="material-card-body">
+                <div className="material-card-tags">
+                  <span className="material-card-tag">{levelLabels[post.level ?? "all"] ?? "Барлығы"}</span>
+                  {subject ? <span className="material-card-tag">{subject}</span> : null}
                 </div>
-                <Link
-                  href={`/materials/${post.slug}`}
-                  className="font-display text-[24px] font-bold leading-tight text-[color:var(--color-text)] no-underline transition-colors hover:text-[#059669]"
-                >
-                  {post.title}
+
+                <Link href={`/materials/${post.slug}`} className="material-card-title-link" prefetch>
+                  <h3 className="material-card-title">{post.title}</h3>
                 </Link>
-                {post.excerpt ? (
-                  <p className="text-[14px] leading-7 text-[color:var(--color-text-muted)]">
-                    {post.excerpt}
-                  </p>
-                ) : null}
-                {resourceUrl ? (
-                  <a
-                    href={resourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex w-fit items-center gap-2 text-[13px] font-semibold text-[#059669] no-underline"
-                  >
-                    Көру / жүктеу <ExternalLink size={14} />
-                  </a>
-                ) : null}
+
+                <p className="material-card-desc">{description}</p>
+
+                <div className="material-card-footer">
+                  <span className="material-card-author">{author}</span>
+
+                  {resourceUrl ? (
+                    <a
+                      href={resourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="material-download-btn"
+                      download
+                    >
+                      <Download />
+                      Жүктеу
+                    </a>
+                  ) : (
+                    <Link href={`/materials/${post.slug}`} className="material-download-btn" prefetch>
+                      <Download />
+                      Көру
+                    </Link>
+                  )}
+                </div>
               </div>
             </article>
           );

@@ -82,6 +82,9 @@ const labelClass =
   "flex flex-col gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]";
 
 const MATERIAL_TYPE_CANDIDATES = ["material", "materials"] as const;
+const NEWS_LEAD_MAX_LENGTH = 220;
+const NEWS_COVER_TARGET_WIDTH = 1600;
+const NEWS_COVER_TARGET_HEIGHT = 900;
 
 function isPostsTypeCheckError(message: string | undefined): boolean {
   if (!message) return false;
@@ -424,41 +427,145 @@ function Panel({
   );
 }
 
-function StatusPills({
-  status,
-  setStatus,
-  accent,
+function AdminEditorSection({
+  title,
+  description,
+  children,
 }: {
-  status: PostStatus;
-  setStatus: (status: PostStatus) => void;
-  accent: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {[
-        ["draft", "Жоба"],
-        ["published", "Жарияланған"],
-      ].map(([value, label]) => {
-        const active = status === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setStatus(value as PostStatus)}
-            className="rounded-[8px] border px-3 py-2 text-[13px] transition-colors"
-            style={{
-              borderColor: active ? accent : "var(--color-border)",
-              background: active ? `${accent}15` : "transparent",
-              color: active ? accent : "var(--color-text-muted)",
-              fontWeight: active ? 600 : 500,
-            }}
-          >
-            {label}
-          </button>
-        );
-      })}
-    </div>
+    <section className="admin-editor-section">
+      <div className="admin-editor-section-head">
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div className="admin-editor-section-body">{children}</div>
+    </section>
   );
+}
+
+type SourceHostInfo = {
+  host: string | null;
+  isValid: boolean;
+};
+
+function parseSourceHostInfo(rawValue: string): SourceHostInfo {
+  const trimmed = rawValue.trim();
+
+  if (!trimmed) {
+    return { host: null, isValid: true };
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return { host: null, isValid: false };
+    }
+
+    return {
+      host: parsed.hostname.replace(/^www\./, "") || null,
+      isValid: true,
+    };
+  } catch {
+    return { host: null, isValid: false };
+  }
+}
+
+function formatPreviewDate(dateValue: string): string {
+  const fallbackDate = "20.04.2026";
+  if (!dateValue.trim()) return fallbackDate;
+
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return fallbackDate;
+
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const year = parsed.getFullYear();
+
+  return `${day}.${month}.${year}`;
+}
+
+async function loadImageElementFromFile(file: File): Promise<HTMLImageElement> {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Сурет файлын оқу мүмкін болмады"));
+      nextImage.src = objectUrl;
+    });
+
+    return image;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function normalizeNewsCoverImage(file: File): Promise<File> {
+  const targetAspectRatio = NEWS_COVER_TARGET_WIDTH / NEWS_COVER_TARGET_HEIGHT;
+  const image = await loadImageElementFromFile(file);
+
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+
+  if (!sourceWidth || !sourceHeight) {
+    throw new Error("Сурет өлшемін анықтау мүмкін болмады");
+  }
+
+  const sourceAspectRatio = sourceWidth / sourceHeight;
+
+  let cropWidth = sourceWidth;
+  let cropHeight = sourceHeight;
+  let cropX = 0;
+  let cropY = 0;
+
+  if (sourceAspectRatio > targetAspectRatio) {
+    cropWidth = sourceHeight * targetAspectRatio;
+    cropX = (sourceWidth - cropWidth) / 2;
+  } else if (sourceAspectRatio < targetAspectRatio) {
+    cropHeight = sourceWidth / targetAspectRatio;
+    cropY = (sourceHeight - cropHeight) / 2;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = NEWS_COVER_TARGET_WIDTH;
+  canvas.height = NEWS_COVER_TARGET_HEIGHT;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Canvas контексті қолжетімсіз");
+  }
+
+  context.drawImage(
+    image,
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    NEWS_COVER_TARGET_WIDTH,
+    NEWS_COVER_TARGET_HEIGHT,
+  );
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob((nextBlob) => resolve(nextBlob), "image/jpeg", 0.92);
+  });
+
+  if (!blob) {
+    throw new Error("Сурет түрлендіру сәтсіз аяқталды");
+  }
+
+  const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "").trim() || "news-cover";
+
+  return new File([blob], `${fileNameWithoutExt}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
 }
 
 function CoverPanel({
@@ -700,6 +807,13 @@ export function PostTypeForm({
   const [level, setLevel] = useState<Level>("all");
   const [subject, setSubject] = useState("");
   const podcastCoverRequestRef = useRef(0);
+  const newsBodyRef = useRef<HTMLTextAreaElement | null>(null);
+  const [isNewsCoverDragging, setIsNewsCoverDragging] = useState(false);
+
+  const initialParsedContent = useMemo(
+    () => parseStoredContent(initialPost?.content ?? ""),
+    [initialPost?.content],
+  );
 
   useEffect(() => {
     setSlug(generateSlug(title));
@@ -708,7 +822,7 @@ export function PostTypeForm({
   useEffect(() => {
     if (!initialPost) return;
 
-    const parsedContent = parseStoredContent(initialPost.content ?? "");
+    const parsedContent = initialParsedContent;
 
     setTitle(initialPost.title ?? "");
     setSlug(generateSlug(initialPost.title ?? ""));
@@ -762,7 +876,7 @@ export function PostTypeForm({
         ]);
       }
     }
-  }, [initialPost, type]);
+  }, [initialParsedContent, initialPost, type]);
 
   useEffect(() => {
     if (!coverFile) return;
@@ -818,6 +932,39 @@ export function PostTypeForm({
   }, [categories, type]);
 
   const articleMetrics = useMemo(() => getArticleContentMetrics(content), [content]);
+  const sourceHostInfo = useMemo(() => parseSourceHostInfo(sourceUrl), [sourceUrl]);
+  const newsSourceError =
+    type === "news" && sourceUrl.trim() && !sourceHostInfo.isValid
+      ? "Сілтеме форматы дұрыс емес. https://example.kz түрінде енгізіңіз."
+      : null;
+  const newsSourceHost = sourceHostInfo.host ?? "source.kz";
+  const newsPreviewDate = useMemo(() => formatPreviewDate(eventDate), [eventDate]);
+  const newsInitialSnapshot = useMemo(
+    () => ({
+      title: initialPost?.title ?? "",
+      excerpt: initialPost?.excerpt ?? "",
+      content: initialParsedContent.body ?? "",
+      sourceUrl: initialPost?.source_url ?? "",
+      eventDate: initialParsedContent.eventDate ?? "",
+      coverImage: initialPost?.cover_url ?? "",
+      status: initialPost?.status === "published" ? "published" : "draft",
+    }),
+    [initialParsedContent.body, initialParsedContent.eventDate, initialPost],
+  );
+  const newsDirty =
+    type === "news" &&
+    (title !== newsInitialSnapshot.title ||
+      excerpt !== newsInitialSnapshot.excerpt ||
+      content !== newsInitialSnapshot.content ||
+      sourceUrl !== newsInitialSnapshot.sourceUrl ||
+      eventDate !== newsInitialSnapshot.eventDate ||
+      coverImage !== newsInitialSnapshot.coverImage ||
+      status !== newsInitialSnapshot.status);
+  const newsStateLabel = loading
+    ? "Сақталуда..."
+    : newsDirty
+      ? "Күйі: өзгерістер бар"
+      : "Күйі: сақталған";
 
   useEffect(() => {
     if (type === "article" && autoArticleCategoryId) {
@@ -944,6 +1091,95 @@ export function PostTypeForm({
     void syncPodcastCoverFromAudioUrl(audioUrl);
   }, [type, audioUrl, coverFile, coverImage, syncPodcastCoverFromAudioUrl]);
 
+  const applyNewsBodyFormat = useCallback(
+    (mode: "bold" | "italic" | "quote" | "list" | "paragraph") => {
+      const textarea = newsBodyRef.current;
+      if (!textarea) return;
+
+      const selectionStart = textarea.selectionStart;
+      const selectionEnd = textarea.selectionEnd;
+      const selectedText = content.slice(selectionStart, selectionEnd);
+
+      let insertText = "";
+      let cursorStart = selectionStart;
+      let cursorEnd = selectionEnd;
+
+      if (mode === "paragraph") {
+        insertText = "\n\n";
+        cursorStart = selectionStart + 2;
+        cursorEnd = cursorStart;
+      }
+
+      if (mode === "bold") {
+        const token = selectedText || "мәтін";
+        insertText = `**${token}**`;
+        cursorStart = selectionStart + 2;
+        cursorEnd = cursorStart + token.length;
+      }
+
+      if (mode === "italic") {
+        const token = selectedText || "мәтін";
+        insertText = `*${token}*`;
+        cursorStart = selectionStart + 1;
+        cursorEnd = cursorStart + token.length;
+      }
+
+      if (mode === "quote") {
+        const token = selectedText || "Цитата";
+        insertText = token
+          .split("\n")
+          .map((line) => `> ${line}`)
+          .join("\n");
+        cursorStart = selectionStart;
+        cursorEnd = selectionStart + insertText.length;
+      }
+
+      if (mode === "list") {
+        const token = selectedText || "Тармақ";
+        insertText = token
+          .split("\n")
+          .map((line) => (line.trim() ? `- ${line}` : "- "))
+          .join("\n");
+        cursorStart = selectionStart;
+        cursorEnd = selectionStart + insertText.length;
+      }
+
+      const nextValue =
+        content.slice(0, selectionStart) +
+        insertText +
+        content.slice(selectionEnd);
+
+      setContent(nextValue);
+
+      requestAnimationFrame(() => {
+        const nextField = newsBodyRef.current;
+        if (!nextField) return;
+        nextField.focus();
+        nextField.setSelectionRange(cursorStart, cursorEnd);
+      });
+    },
+    [content],
+  );
+
+  const applyNewsCoverFile = useCallback(async (file: File | null) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Тек сурет файлын таңдаңыз (JPG, PNG, WEBP)");
+      return;
+    }
+
+    try {
+      const normalizedFile = await normalizeNewsCoverImage(file);
+      setCoverFile(normalizedFile);
+      setCoverImage("");
+    } catch {
+      // If normalization fails (rare browser/image edge cases), keep original file instead of blocking save.
+      setCoverFile(file);
+      setCoverImage("");
+    }
+  }, []);
+
   async function handleExtractArticleText() {
     if (!articleFile) {
       alert("Алдымен DOCX немесе PDF файл таңдаңыз");
@@ -1015,6 +1251,16 @@ export function PostTypeForm({
       return;
     }
 
+    if (type === "news" && !excerpt.trim()) {
+      alert("Қысқаша анонс міндетті");
+      return;
+    }
+
+    if (type === "news" && newsSourceError) {
+      alert("Дереккөз сілтемесі дұрыс емес");
+      return;
+    }
+
     if (
       type === "article" &&
       nextStatus === "published" &&
@@ -1070,29 +1316,20 @@ export function PostTypeForm({
     let coverUrl = coverImage || null;
 
     if (coverFile) {
-      const storageClient = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+      try {
+        coverUrl = await uploadToMedia(coverFile, "covers");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Белгісіз қате";
+        const isNetworkError = /failed to fetch/i.test(message);
 
-      const {
-        data: { user: storageUser },
-      } = await storageClient.auth.getUser();
-
-      const ext = coverFile.name.split(".").pop();
-      const path = `covers/${storageUser?.id ?? "anon"}/${Date.now()}.${ext}`;
-
-      const { error: upErr } = await storageClient.storage
-        .from("media")
-        .upload(path, coverFile, { upsert: false });
-
-      if (upErr) {
-        alert(`Обложка жүктеу қатесі: ${upErr.message}`);
+        alert(
+          isNetworkError
+            ? "Обложка жүктеу қатесі: Failed to fetch. Интернет, VPN/AdBlock және Supabase қолжетімділігін тексеріңіз."
+            : `Обложка жүктеу қатесі: ${message}`,
+        );
         setLoading(false);
         return;
       }
-
-      coverUrl = storageClient.storage.from("media").getPublicUrl(path).data.publicUrl;
     }
 
     const resolvedMaterialResources: StoredMaterialResource[] = [];
@@ -1267,6 +1504,328 @@ export function PostTypeForm({
     }
 
     router.push("/admin/posts");
+  }
+
+  if (type === "news") {
+    const previewTitle = title.trim() || "Жаңалық тақырыбы";
+    const previewLead = excerpt.trim() || "Қысқаша анонс осы жерде көрінеді";
+    const newsPreviewCover = coverFile && coverPreview ? coverPreview : coverImage;
+
+    return (
+      <section className="flex w-full max-w-none flex-col gap-6">
+        <header className="flex flex-col gap-4">
+          <Link
+            href="/admin/posts/new"
+            className="w-fit text-[13px] font-medium text-[color:var(--color-text-muted)] no-underline transition-colors hover:text-[color:var(--color-primary)]"
+          >
+            ← Артқа
+          </Link>
+          <div className="flex items-center gap-3">
+            <span
+              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em]"
+              style={{ background: "var(--color-surface-offset)", color: "var(--color-text)" }}
+            >
+              <Icon size={14} />
+              ЖАҢАЛЫҚ КОМПОЗЕРІ
+            </span>
+            <h1 className="font-display text-[30px] font-bold text-[color:var(--color-text)]">
+              {isEditing ? "Жаңалықты өңдеу" : "Жаңа жаңалық"}
+            </h1>
+          </div>
+        </header>
+
+        <form
+          className="flex flex-col gap-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSave(status);
+          }}
+        >
+          <div className="news-editor-layout">
+            <div className="flex flex-col gap-5">
+              <AdminEditorSection
+                title="Негізгі ақпарат"
+                description="Жаңалықтың тақырыбы мен қысқаша сипаттамасы"
+              >
+                <div className="admin-field-wrap">
+                  <label htmlFor="news-title" className="admin-field-label">
+                    Тақырып *
+                  </label>
+                  <input
+                    id="news-title"
+                    type="text"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="Жаңалық тақырыбын енгізіңіз"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div className="admin-field-wrap">
+                  <div className="admin-field-topline">
+                    <label htmlFor="news-excerpt" className="admin-field-label">
+                      Қысқаша анонс *
+                    </label>
+                    <span className="admin-char-counter">
+                      {excerpt.length} / {NEWS_LEAD_MAX_LENGTH}
+                    </span>
+                  </div>
+                  <textarea
+                    id="news-excerpt"
+                    value={excerpt}
+                    onChange={(event) => setExcerpt(event.target.value.slice(0, NEWS_LEAD_MAX_LENGTH))}
+                    rows={3}
+                    maxLength={NEWS_LEAD_MAX_LENGTH}
+                    className="admin-textarea admin-textarea-compact"
+                    placeholder="2-3 жолдық қысқаша анонс жазыңыз"
+                  />
+                  <p className="admin-field-helper">
+                    Бұл мәтін жаңалық карточкасында және preview бөлімінде көрсетіледі
+                  </p>
+                </div>
+              </AdminEditorSection>
+
+              <AdminEditorSection
+                title="Мазмұн"
+                description="Негізгі фактіні бірінші абзацта беріп, кейін контекст қосыңыз"
+              >
+                <div className="news-writing-helper">
+                  <strong>Жаңалық құрылымы:</strong>
+                  <span>1) басты факт, 2) қысқа контекст, 3) дереккөз немесе түсініктеме</span>
+                </div>
+
+                <div className="admin-field-wrap">
+                  <label htmlFor="news-body" className="admin-field-label">
+                    Негізгі мәтін *
+                  </label>
+
+                  <div className="news-editor-toolbar" role="toolbar" aria-label="Мәтін пішімдеу">
+                    <button type="button" onClick={() => applyNewsBodyFormat("bold")}>B</button>
+                    <button type="button" onClick={() => applyNewsBodyFormat("italic")}>I</button>
+                    <button type="button" onClick={() => applyNewsBodyFormat("quote")}>“ ”</button>
+                    <button type="button" onClick={() => applyNewsBodyFormat("list")}>• тізім</button>
+                    <button type="button" onClick={() => applyNewsBodyFormat("paragraph")}>¶</button>
+                  </div>
+
+                  <textarea
+                    id="news-body"
+                    ref={newsBodyRef}
+                    value={content}
+                    onChange={(event) => setContent(event.target.value)}
+                    rows={12}
+                    className="admin-textarea news-body-textarea"
+                    placeholder="Жаңалықтың негізгі мазмұнын жазыңыз. Бірінші абзацта басты факт, кейін контекст, соңында дереккөз."
+                  />
+                </div>
+              </AdminEditorSection>
+
+              <AdminEditorSection
+                title="Метадеректер"
+                description="Дереккөз, оқиға күні және карточка мұқабасы"
+              >
+                <div className="admin-field-wrap">
+                  <label htmlFor="news-source" className="admin-field-label">
+                    Дереккөз URL
+                  </label>
+                  <input
+                    id="news-source"
+                    type="url"
+                    value={sourceUrl}
+                    onChange={(event) => setSourceUrl(event.target.value)}
+                    placeholder="https://..."
+                    className={`admin-input${newsSourceError ? " admin-input-error" : ""}`}
+                  />
+                  {newsSourceError ? (
+                    <p className="admin-field-error">{newsSourceError}</p>
+                  ) : (
+                    <p className="admin-field-helper">Дереккөз: {newsSourceHost}</p>
+                  )}
+                </div>
+
+                <div className="admin-field-wrap">
+                  <label htmlFor="news-event-date" className="admin-field-label">
+                    Оқиға күні
+                  </label>
+                  <input
+                    id="news-event-date"
+                    type="date"
+                    value={eventDate}
+                    onChange={(event) => setEventDate(event.target.value)}
+                    className="admin-input"
+                  />
+                  <p className="admin-field-helper">Жаңалықта көрсетілетін оқиға күні</p>
+                </div>
+
+                <div className="admin-field-wrap">
+                  <label htmlFor="news-cover-upload" className="admin-field-label">
+                    Мұқаба файлы
+                  </label>
+                  <div
+                    className={`news-cover-dropzone${isNewsCoverDragging ? " is-dragging" : ""}`}
+                    onClick={() => document.getElementById("news-cover-upload")?.click()}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setIsNewsCoverDragging(true);
+                    }}
+                    onDragLeave={() => setIsNewsCoverDragging(false)}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      setIsNewsCoverDragging(false);
+                      void applyNewsCoverFile(event.dataTransfer.files?.[0] ?? null);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        document.getElementById("news-cover-upload")?.click();
+                      }
+                    }}
+                  >
+                    <input
+                      id="news-cover-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(event) => {
+                        void applyNewsCoverFile(event.target.files?.[0] ?? null);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+
+                    {newsPreviewCover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={newsPreviewCover} alt="News cover preview" className="news-cover-dropzone-image" />
+                    ) : (
+                      <div className="news-cover-dropzone-content">
+                        <div className="news-cover-dropzone-title">Файлды сүйреп әкеліңіз</div>
+                        <div className="news-cover-dropzone-hint">немесе таңдау үшін басыңыз</div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="news-cover-actions">
+                    <button
+                      type="button"
+                      className="admin-action-btn admin-action-btn-secondary"
+                      onClick={() => document.getElementById("news-cover-upload")?.click()}
+                    >
+                      Файл таңдау
+                    </button>
+                    {coverFile || coverImage ? (
+                      <button
+                        type="button"
+                        className="admin-action-btn admin-action-btn-secondary"
+                        onClick={() => {
+                          setCoverFile(null);
+                          setCoverPreview("");
+                          setCoverImage("");
+                        }}
+                      >
+                        Жою
+                      </button>
+                    ) : null}
+                  </div>
+                  <p className="admin-field-helper">
+                    JPG, PNG, WEBP. Файл автоматты түрде 16:9 форматқа келтіріледі.
+                  </p>
+                </div>
+              </AdminEditorSection>
+
+              <AdminEditorSection
+                title="Жариялау"
+                description="Статусын таңдаңыз және auto-generated slug-ты тексеріңіз"
+              >
+                <div className="admin-field-wrap">
+                  <label htmlFor="news-status" className="admin-field-label">
+                    Publish status
+                  </label>
+                  <select
+                    id="news-status"
+                    value={status}
+                    onChange={(event) => setStatus(event.target.value as PostStatus)}
+                    className="admin-select"
+                  >
+                    <option value="draft">Жоба</option>
+                    <option value="published">Жарияланған</option>
+                  </select>
+                </div>
+
+                <div className="admin-field-wrap">
+                  <label htmlFor="news-slug" className="admin-field-label">
+                    Slug (readonly auto-generated)
+                  </label>
+                  <input id="news-slug" type="text" value={slug} readOnly className="admin-input" />
+                </div>
+              </AdminEditorSection>
+            </div>
+
+            <aside className="news-preview-panel">
+              <div className="preview-block">
+                <div className="preview-label">КАРТОЧКА КӨРІНІСІ</div>
+                <article className="news-preview-card">
+                  <div className="news-preview-cover">
+                    {newsPreviewCover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={newsPreviewCover} alt={previewTitle} className="news-preview-cover-image" />
+                    ) : (
+                      <div className="news-preview-cover-placeholder">NEWS</div>
+                    )}
+                    <span className="news-preview-badge">ЖАҢАЛЫҚ</span>
+                  </div>
+                  <div className="news-preview-body">
+                    <h3>{previewTitle}</h3>
+                    <p>{previewLead}</p>
+                    <div className="news-preview-meta">
+                      <span>{newsPreviewDate}</span>
+                      <span>{newsSourceHost}</span>
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              <div className="preview-block">
+                <div className="preview-label">БЕТТЕГІ КӨРІНІС</div>
+                <div className="news-detail-preview">
+                  <span className="detail-type">ЖАҢАЛЫҚ</span>
+                  <h2>{previewTitle}</h2>
+                  <p>{previewLead}</p>
+                  <div className="detail-meta">
+                    <span>{newsPreviewDate}</span>
+                    <span>{newsSourceHost}</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <footer className="admin-actions-bar">
+            <div className="admin-actions-state">
+              <span>{newsStateLabel}</span>
+              <span>Автосақтау: жоба режимінде</span>
+            </div>
+            <div className="admin-actions-buttons">
+              <button
+                type="button"
+                disabled={loading || uploading}
+                onClick={() => void handleSave("draft")}
+                className="admin-action-btn admin-action-btn-secondary"
+              >
+                {uploading ? "Жүктелуде..." : "Жоба сақтау"}
+              </button>
+              <button
+                type="button"
+                disabled={loading || uploading}
+                onClick={() => void handleSave("published")}
+                className="admin-action-btn admin-action-btn-primary"
+              >
+                {uploading ? "Жүктелуде..." : "Жариялау"}
+              </button>
+            </div>
+          </footer>
+        </form>
+      </section>
+    );
   }
 
   return (
@@ -1610,43 +2169,6 @@ export function PostTypeForm({
               </>
             ) : null}
 
-            {type === "news" ? (
-              <>
-                <label className={labelClass}>
-                  Мәтін*
-                  <textarea
-                    value={content}
-                    onChange={(event) => setContent(event.target.value)}
-                    rows={10}
-                    placeholder="Жаңалықтың қысқаша мазмұны..."
-                    className={fieldClass}
-                    style={{ borderRadius: "8px" }}
-                  />
-                </label>
-                <label className={labelClass}>
-                  Дереккөз сілтемесі
-                  <input
-                    type="url"
-                    value={sourceUrl}
-                    onChange={(event) => setSourceUrl(event.target.value)}
-                    placeholder="https://..."
-                    className={fieldClass}
-                    style={{ borderRadius: "8px" }}
-                  />
-                </label>
-                <label className={labelClass}>
-                  Оқиға күні
-                  <input
-                    type="date"
-                    value={eventDate}
-                    onChange={(event) => setEventDate(event.target.value)}
-                    className={fieldClass}
-                    style={{ borderRadius: "8px" }}
-                  />
-                </label>
-              </>
-            ) : null}
-
             {type === "podcast" ? (
               <>
                 <label className={labelClass}>
@@ -1953,12 +2475,6 @@ export function PostTypeForm({
           </div>
 
           <aside className="flex flex-col gap-5">
-            {type === "news" ? (
-              <Panel title="ЖАРИЯЛАУ">
-                <StatusPills status={status} setStatus={setStatus} accent={config.accent} />
-              </Panel>
-            ) : null}
-
             {type === "podcast" ? (
               <Panel title="ТІЛ">
                 <label className={labelClass}>

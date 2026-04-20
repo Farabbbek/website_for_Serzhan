@@ -7,6 +7,7 @@ type FooterLink = {
   label: string;
   href: string;
   external?: boolean;
+  soon?: boolean;
 };
 
 type FooterColumn = {
@@ -31,8 +32,8 @@ export default function Footer() {
       title: "ПЛАТФОРМА",
       links: [
         { label: "Біз туралы", href: "/about" },
-        { label: "Журнал", href: "/posts" },
-        { label: "Форум", href: "/forum" },
+        { label: "Мақалалар", href: "/category/maqalalar" },
+        { label: "Форум", href: "/forum", soon: true },
         { label: "Подкасттар", href: "/podcasts" },
       ],
     },
@@ -147,6 +148,8 @@ export default function Footer() {
                     href={link.href}
                     target={link.external ? "_blank" : undefined}
                     rel={link.external ? "noopener noreferrer" : undefined}
+                    aria-disabled={link.soon ? true : undefined}
+                    className={`footer-link${link.soon ? " footer-link-soon" : ""}`}
                     style={{
                       fontFamily: "var(--font-ui)",
                       fontSize: 13,
@@ -157,13 +160,16 @@ export default function Footer() {
                       display: "inline-block",
                     }}
                     onMouseEnter={(e) => {
+                      if (link.soon) return;
                       e.currentTarget.style.color = "var(--color-text)";
                     }}
                     onMouseLeave={(e) => {
+                      if (link.soon) return;
                       e.currentTarget.style.color = "var(--color-text-muted)";
                     }}
                   >
                     {link.label}
+                    {link.soon ? <span className="soon-tag">Soon</span> : null}
                   </Link>
                 </li>
               ))}
