@@ -186,7 +186,7 @@ export const messages: Record<Locale, Messages> = {
       toggleCategories: "Санаттарды ауыстыру",
     },
     footer: {
-      zerde: "Қазақстан философия студенттерінің платформасы. КарГУ · Ф-23-1К",
+      zerde: "Қазақстан философия студенттерінің платформасы. ҚарҰЗУ · Ф-23-1К",
       platform: "ПЛАТФОРМА",
       home: "Басты бет",
       articles: "Мақалалар",
