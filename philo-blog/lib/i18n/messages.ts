@@ -194,7 +194,7 @@ export const messages: Record<Locale, Messages> = {
       forum: "Форум",
       podcasts: "Подкасттар",
       soon: "Жақында",
-      copyright: "© {year} ZERDE · Е.А.Бөкетов атындағы КарГУ",
+      copyright: "© {year} ZERDE · Е.А.Бөкетов атындағы ҚарҰЗУ",
       locales: "ҚАЗ / РУС / ENG",
     },
     common: {
@@ -250,7 +250,7 @@ export const messages: Record<Locale, Messages> = {
       about3:
         "Кураторымыз – Марат Жұмагельдинов. Біздің оқу бағдарымыз классикалық философияны, білімге деген құштарлықты және заманауи қоғамға ашық интеллектуалдық ұстанымды негізге алады.",
       university: "Е.А.Бөкетов атындағы Қарағанды университеті",
-      metaUniversity: "Е.А.БӨКЕТОВ АТЫНДАҒЫ КАРГУ",
+      metaUniversity: "Е.А.БӨКЕТОВ АТЫНДАҒЫ ҚарҰЗУ",
       metaCity: "ҚАРАҒАНДЫ, 2026",
     },
     connect: {
@@ -358,7 +358,7 @@ export const messages: Record<Locale, Messages> = {
       toggleCategories: "Переключить категории",
     },
     footer: {
-      zerde: "Платформа студентов философии Казахстана. КарГУ · Ф-23-1К",
+      zerde: "Платформа студентов философии Казахстана. КарНИУ · Ф-23-1К",
       platform: "ПЛАТФОРМА",
       home: "Главная",
       articles: "Статьи",
@@ -366,7 +366,7 @@ export const messages: Record<Locale, Messages> = {
       forum: "Форум",
       podcasts: "Подкасты",
       soon: "Скоро",
-      copyright: "© {year} ZERDE · КарГУ имени Е.А.Букетова",
+      copyright: "© {year} ZERDE · КарНИУ имени Е.А.Букетова",
       locales: "KAZ / RUS / ENG",
     },
     common: {
@@ -530,7 +530,7 @@ export const messages: Record<Locale, Messages> = {
       toggleCategories: "Toggle categories",
     },
     footer: {
-      zerde: "A platform for philosophy students of Kazakhstan. KarU · F-23-1K",
+      zerde: "A platform for philosophy students of Kazakhstan. KarNIU · F-23-1K",
       platform: "PLATFORM",
       home: "Home",
       articles: "Articles",
